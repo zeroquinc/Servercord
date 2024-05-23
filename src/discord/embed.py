@@ -18,3 +18,7 @@ class EmbedBuilder:
 
     def build(self):
         return self.embed
+    
+    async def send_embed(self, channel):
+        # Send the embed to the specified channel
+        await channel.send(embed=self.build())
