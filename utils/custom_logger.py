@@ -77,7 +77,7 @@ def setup_discord_logging():
     """
     global discord_logger
     discord_logger = logging.getLogger('discord')
-    discord_logger.setLevel(logging.DEBUG)
+    discord_logger.setLevel(logging.INFO)
     discord_handler = DiscordHandler()
     discord_logger.handlers = [discord_handler]
     discord_logger.propagate = False
