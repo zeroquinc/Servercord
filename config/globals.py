@@ -1,16 +1,15 @@
 from dotenv import load_dotenv
 import os
 
-# DotEnv
 load_dotenv()
 
-# Discord Globals
+# Discord
 DISCORD_SERVER_ID = os.getenv("DISCORD_SERVER_ID")
-TOKEN = os.environ["DISCORD_TOKEN"]
+DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
 
 # Trakt
-TRAKT_USERNAME = "desileR"
-TRAKT_CLIENTID = os.getenv("TRAKT_CLIENTID")
+TRAKT_API_URL = "https://api.trakt.tv"
+TRAKT_CLIENT_ID = os.getenv("TRAKT_CLIENTID")
 
-# API Keys
+# TMDB
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
