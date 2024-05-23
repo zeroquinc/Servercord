@@ -44,6 +44,7 @@ for rating in ratings:
 
 This example fetches and displays the user's favorite items within the specified time range.
 
+```python
 favorites = user.get_favorites(start_time=one_hour_ago, end_time=now)
 for favorite in favorites:
     print(f"Title: {favorite.title}")
@@ -53,6 +54,7 @@ for favorite in favorites:
     print(f"Listed at: {favorite.listed_at}")
     print(f"Show title: {favorite.show_title}")
     print()
+```
 
 Output Example
 --------------
