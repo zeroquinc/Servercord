@@ -7,12 +7,21 @@ async def process_ratings(ratings_channel, username):
     client = TraktClient()
     user = client.user(username)
     now = datetime.now()
-    one_hour_ago = now - timedelta(hours=30)
+    one_hour_ago = now - timedelta(hours=120)
     ratings = user.get_ratings(start_time=one_hour_ago, end_time=now)
 
-    for rating in ratings:
-        description = f"**{rating.show_title} (S{rating.season_id}E{rating.episode_id})**\n{rating.title}\n\n {username} rated {rating.rated} :star:"
+    async def process_rating(rating):
+        description_formats = {
+            'show': f"**{rating.show_title}**\n{rating.title}\n\n {username} rated this {rating.type} with {rating.rated} :star:",
+            'season': f"**{rating.show_title}**\nSeason {rating.season_id}\n\n {username} rated this {rating.type} with {rating.rated} :star:",
+            'episode': f"**{rating.show_title} (S{rating.season_id}E{rating.episode_id})**\n{rating.title}\n\n {username} rated this {rating.type} with {rating.rated} :star:",
+            'movie': f"**{rating.title} ({rating.year})**\n\n {username} rated this {rating.type} with {rating.rated} :star:"
+        }
+        description = description_formats[rating.type]
         embed_builder = EmbedBuilder(description=description, color=0xFF0000)
         embed_builder.set_footer(text=rating.date)
         embed_builder.set_thumbnail(url=rating.poster)
         await embed_builder.send_embed(ratings_channel)
+
+    for rating in ratings:
+        await process_rating(rating)
