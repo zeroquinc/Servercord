@@ -1,7 +1,5 @@
 import discord
-from discord.ext import commands, tasks
-
-from config.config import DELAY_START
+from discord.ext import commands
 
 from utils.custom_logger import logger
 from utils.datetime import get_times
@@ -38,7 +36,12 @@ class DiscordBot:
         logger.info(
             f'Logged in as {self.bot.user.name} ({self.bot.user.id}) and is ready!'
         )
-
+        
+        # Load the tasks cog
+        logger.info('Loading tasks cog')
+        await self.bot.load_extension('src.discord.cogs.tasks')
+        
+        # Load commands
         @self.bot.command()
         async def favorite(ctx, username: str = None):
             if username is None:

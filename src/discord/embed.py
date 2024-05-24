@@ -15,6 +15,10 @@ class EmbedBuilder:
     def set_footer(self, text, icon_url=None):
         self.embed.set_footer(text=text, icon_url=icon_url)
         return self
+    
+    def set_thumbnail(self, url):
+        self.embed.set_thumbnail(url=url)
+        return self
 
     def build(self):
         return self.embed
