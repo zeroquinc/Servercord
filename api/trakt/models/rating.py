@@ -1,7 +1,10 @@
 from dateutil.parser import parse
 from dateutil.tz import tzlocal
 
-from src.tmdb.client import TMDb
+from api.trakt.models.movie import Movie
+from api.trakt.models.show import Show
+from api.trakt.models.season import Season
+from api.trakt.models.episode import Episode
 
 class Rating:
     def __init__(self, data):
@@ -41,51 +44,3 @@ def create_media(data):
     media_classes = {'movie': Movie, 'episode': Episode, 'season': Season, 'show': Show}
     media_type = data['type']
     return media_classes.get(media_type, lambda _: None)(data)
-
-class Movie:
-    def __init__(self, data):
-        self.title = data['movie']['title']
-        self.year = data['movie']['year']
-        self.slug = data['movie']['ids']['slug']
-        self.trakt_id = data['movie']['ids']['trakt']
-        self.imdb_id = data['movie']['ids']['imdb']
-        self.tmdb_id = data['movie']['ids']['tmdb']
-        self.poster = TMDb.movie_poster_path(self.tmdb_id)
-
-class Episode:
-    def __init__(self, data):
-        self.title = data['episode']['title']
-        self.show_title = data['show']['title']
-        self.season_id = "{:02}".format(data['episode']['season'])  # Format as two-digit number
-        self.episode_id = "{:02}".format(data['episode']['number'])  # Format as two-digit number
-        self.year = data['show']['year']
-        self.slug = data['show']['ids']['slug']
-        self.trakt_id = data['show']['ids']['trakt']
-        self.imdb_id = data['show']['ids']['imdb']
-        self.tmdb_id = data['show']['ids']['tmdb']
-        self.tvdb_id = data['show']['ids']['tvdb']
-        self.poster = TMDb.show_poster_path(self.tvdb_id)
-
-class Season:
-    def __init__(self, data):
-        self.title = data['show']['title']
-        self.show_title = data['show']['title']
-        self.season_id = "{:02}".format(data['season']['number'])  # Format as two-digit number
-        self.year = data['show']['year']
-        self.slug = data['show']['ids']['slug']
-        self.trakt_id = data['show']['ids']['trakt']
-        self.imdb_id = data['show']['ids']['imdb']
-        self.tmdb_id = data['show']['ids']['tmdb']
-        self.tvdb_id = data['show']['ids']['tvdb']
-        self.poster = TMDb.show_poster_path(self.tvdb_id)
-
-class Show:
-    def __init__(self, data):
-        self.title = data['show']['title']
-        self.year = data['show']['year']
-        self.slug = data['show']['ids']['slug']
-        self.trakt_id = data['show']['ids']['trakt']
-        self.imdb_id = data['show']['ids']['imdb']
-        self.tmdb_id = data['show']['ids']['tmdb']
-        self.tvdb_id = data['show']['ids']['tvdb']
-        self.poster = TMDb.show_poster_path(self.tvdb_id)
