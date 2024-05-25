@@ -23,3 +23,7 @@ class TraktClient:
     def user(self, username):
         from .endpoints.user import User
         return User(self, username)
+
+    def shows(self):
+        from .endpoints.shows import Shows
+        return Shows(self)
