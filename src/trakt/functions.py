@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from utils.datetime import get_times
 
 from src.discord.embed import EmbedBuilder
 from api.trakt.client import TraktClient
@@ -6,8 +6,7 @@ from api.trakt.client import TraktClient
 async def process_ratings(ratings_channel, username):
     client = TraktClient()
     user = client.user(username)
-    now = datetime.now()
-    one_hour_ago = now - timedelta(hours=120)
+    now, one_hour_ago = get_times()
     ratings = user.get_ratings(start_time=one_hour_ago, end_time=now)
 
     async def process_rating(rating):

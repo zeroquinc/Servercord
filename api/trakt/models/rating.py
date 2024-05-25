@@ -1,7 +1,7 @@
 from dateutil.parser import parse
 from dateutil.tz import tzlocal
 
-from src.tmdb.client import TMDb
+from api.tmdb.client import TMDb
 
 class Rating:
     def __init__(self, data):

@@ -1,6 +1,7 @@
 import json
 from utils.custom_logger import logger
 
+from src.radarr.functions import process_webhook
 class RadarrWebhookHandler:
     def __init__(self, payload, discord_bot):
         self.payload = payload
@@ -28,3 +29,5 @@ class RadarrWebhookHandler:
     async def handle_webhook(self):
         logger.info(f"Processing Radarr webhook payload for event type: {self.event_type}")
         logger.debug(f"Payload: {json.dumps(self.payload, indent=4)}")
+        channel = self.discord_bot.bot.get_channel(1052967176828616724)
+        await process_webhook(self, channel)
