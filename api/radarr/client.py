@@ -2,6 +2,7 @@ import json
 from utils.custom_logger import logger
 
 from src.radarr.functions import process_webhook
+
 class RadarrWebhookHandler:
     def __init__(self, payload, discord_bot):
         self.payload = payload

@@ -1,10 +1,7 @@
 from dateutil.parser import parse
 from dateutil.tz import tzlocal
 
-from api.trakt.models.movie import Movie
-from api.trakt.models.show import Show
-from api.trakt.models.season import Season
-from api.trakt.models.episode import Episode
+from api.tmdb.client import TMDb
 
 class Rating:
     def __init__(self, data):
