@@ -1,4 +1,4 @@
-from src.tmdb.client import TMDb
+from api.tmdb.client import TMDb
 
 class Show:
     def __init__(self, data):
