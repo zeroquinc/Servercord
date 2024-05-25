@@ -1,3 +1,5 @@
+from utils.datetime import get_times
+
 from src.discord.embed import EmbedBuilder
 from api.trakt.client import TraktClient
 from utils.datetime import get_times
@@ -7,8 +9,7 @@ async def process_ratings(ratings_channel, username):
     client = TraktClient()
     user = client.user(username)
     now, one_hour_ago = get_times()
-    ratings = sorted(user.get_ratings(start_time=one_hour_ago, end_time=now), key=lambda rating: rating.date) # Get ratings sorted by date
-    #ratings = user.get_ratings(start_time=one_hour_ago, end_time=now) # Get ratings
+    ratings = user.get_ratings(start_time=one_hour_ago, end_time=now)
 
     async def process_rating(rating):
         description_formats = {

@@ -1,6 +1,8 @@
 import json
 from utils.custom_logger import logger
 
+from src.sonarr.functions import process_webhook
+
 class SonarrWebhookHandler:
     def __init__(self, payload, discord_bot):
         self.payload = payload
@@ -48,3 +50,5 @@ class SonarrWebhookHandler:
     async def handle_webhook(self):
         logger.info(f"Processing Sonarr webhook payload for event type: {self.event_type}")
         logger.debug(f"Payload: {json.dumps(self.payload, indent=4)}")
+        channel = self.discord_bot.bot.get_channel(1052967176828616724)
+        await process_webhook(self, channel)

@@ -1,8 +1,8 @@
 from aiohttp import web
 
 from utils.custom_logger import logger
-from src.sonarr.client import SonarrWebhookHandler
-from src.radarr.client import RadarrWebhookHandler
+from api.sonarr.client import SonarrWebhookHandler
+from api.radarr.client import RadarrWebhookHandler
 
 class HandleWebHook:
     # Initialize the webhook receiver
