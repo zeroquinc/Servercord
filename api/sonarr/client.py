@@ -1,7 +1,9 @@
 import json
 from utils.custom_logger import logger
 
+from api.tmdb.client import TMDb
 from src.sonarr.functions import process_webhook
+from config.globals import SONARR_CHANNEL
 
 class SonarrWebhookHandler:
     def __init__(self, payload, discord_bot):
@@ -27,6 +29,7 @@ class SonarrWebhookHandler:
         self.custom_format_score = self.release_data.get('customFormatScore', 'N/A')
         self.custom_formats = self.release_data.get('customFormats', [])
         self.episode_count = len(self.episodes)
+        self.poster = TMDb.show_poster_path(self.tvdb_id)
 
     def check_request_type(self):
         if self.episode_count > 1:
@@ -50,5 +53,5 @@ class SonarrWebhookHandler:
     async def handle_webhook(self):
         logger.info(f"Processing Sonarr webhook payload for event type: {self.event_type}")
         logger.debug(f"Payload: {json.dumps(self.payload, indent=4)}")
-        channel = self.discord_bot.bot.get_channel(1052967176828616724)
+        channel = self.discord_bot.bot.get_channel(SONARR_CHANNEL)
         await process_webhook(self, channel)
