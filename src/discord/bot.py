@@ -2,9 +2,6 @@ import discord
 from discord.ext import commands
 
 from utils.custom_logger import logger
-from utils.datetime import get_times
-from src.discord.embed import EmbedBuilder
-from api.trakt.client import TraktClient
 
 class DiscordBot:
     def __init__(self, token):
@@ -41,48 +38,16 @@ class DiscordBot:
         logger.info('Loading tasks cog')
         await self.bot.load_extension('src.discord.cogs.tasks')
         
-        # Load commands
-        @self.bot.command()
-        async def favorite(ctx, username: str = None):
-            if username is None:
-                await ctx.send('No username given!')
-                return
+        # Load commands here
 
-            logger.info(f'Trakt command invoked with username: {username}')
-            client = TraktClient()
-            user = client.user(username)
-            # Get the current time and the time one hour ago
-            now, one_hour_ago = get_times()
-            favorites = user.get_favorites(start_time=one_hour_ago, end_time=now)
-            # Add the last favorite to the embed
-            if favorites:
-                latest_favorite = favorites[-1]
-                # Create an EmbedBuilder instance
-                embed_builder = EmbedBuilder(description=f'{username} has favorited {latest_favorite.title}')
-            else:
-                embed_builder = EmbedBuilder(description=f'{username} has no favorites')
-            # Send the embed to the channel where the command was invoked
-            await embed_builder.send_embed(ctx.channel)
-            
-        @self.bot.command()
-        async def rating(ctx, username: str = None):
-            if username is None:
-                await ctx.send('No username given!')
-                return
-
-            logger.info(f'Trakt command invoked with username: {username}')
-            client = TraktClient()
-            user = client.user(username)
-            # Get the current time and the time one hour ago
-            now, one_hour_ago = get_times()
-            ratings = user.get_ratings(start_time=one_hour_ago, end_time=now)
-            # Add the last favorite to the embed
-            if ratings:
-                latest_rating = ratings[-1]
-                # Create an EmbedBuilder instance
-                embed_builder = EmbedBuilder(description=f'{username} has rated "**{latest_rating.title}**"\n{latest_rating.rated_at} with a score of {latest_rating.rated}')
-                embed_builder.set_footer(text=f"Media type: {latest_rating.type}")
-            else:
-                embed_builder = EmbedBuilder(description=f'{username} has no ratings')
-            # Send the embed to the channel where the command was invoked
-            await embed_builder.send_embed(ctx.channel)
+    ## Post an single embed to a channel
+    async def dispatch_embed(self, channel_id, embed):
+        channel = self.bot.get_channel(channel_id)
+        if not channel:
+            logger.error(f"Channel {channel_id} not found")
+            return
+        try:
+            await channel.send(embed=embed)
+            logger.info(f"Embed dispatched with title: {embed.title} and author: {embed.author.name}")
+        except Exception as e:
+            logger.error(f"Error dispatching embed: {e}")

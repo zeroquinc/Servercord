@@ -3,6 +3,7 @@ from aiohttp import web
 from utils.custom_logger import logger
 from api.sonarr.client import SonarrWebhookHandler
 from api.radarr.client import RadarrWebhookHandler
+from api.plex.client import PlexWebhookHandler
 
 class HandleWebHook:
     # Initialize the webhook receiver
@@ -13,7 +14,7 @@ class HandleWebHook:
         self.app = web.Application()
         self.app.router.add_post('/sonarr_webhook', self.handle_sonarr)
         self.app.router.add_post('/radarr_webhook', self.handle_radarr)
-        #self.app.router.add_post('/plex_webhook', self.handle_plex)
+        self.app.router.add_post('/plex_webhook', self.handle_plex)
         self.uvicorn_params = {
             "host": self.host,
             "port": self.port,
@@ -40,6 +41,18 @@ class HandleWebHook:
             await radarr_handler.handle_webhook()
         except Exception as e:
             logger.error(f"Error handling Radarr webhook: {e}")
+            return web.Response(text='Error', status=500)
+
+        return web.Response(text='OK')
+    
+    # Handle Plex webhook
+    async def handle_plex(self, request):
+        try:
+            payload = await request.json()
+            plex_handler = PlexWebhookHandler(payload, self.discord_bot)
+            await plex_handler.handle_webhook()
+        except Exception as e:
+            logger.error(f"Error handling Plex webhook: {e}")
             return web.Response(text='Error', status=500)
 
         return web.Response(text='OK')
