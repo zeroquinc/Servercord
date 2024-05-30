@@ -99,7 +99,7 @@ class PlexWebhookHandler:
         return embed
     
     def embed_for_newcontent_episode(self):
-        description = f"{self.title} (S{self.season_number}E{self.episode_number})\nTMDb: {self.rating}"
+        description = f"{self.title} (S{self.season_number}E{self.episode_number})"
         embed = EmbedBuilder(title="New Episode added to Plex", description=description, color=0xe5a00d)
         poster_path = self.poster_url
         if poster_path:
@@ -117,7 +117,7 @@ class PlexWebhookHandler:
         return embed
     
     def embed_for_newcontent_movie(self):
-        description = f"[{self.title} ({self.year})]({self.imdb_url})\n\nRotten Tomatoes: {self.rating} :popcorn:\nIMDb: {self.audience_rating} :popcorn:"
+        description = f"[{self.title} ({self.year})]({self.imdb_url})"
         embed = EmbedBuilder(title="New Movie added to Plex", description=description, color=0xe5a00d)
         poster_path = self.poster_url
         if poster_path:
