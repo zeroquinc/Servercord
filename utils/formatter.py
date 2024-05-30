@@ -7,4 +7,4 @@ class Formatter:
     
     @staticmethod
     def format_custom_formats(custom_format_score, custom_formats):
-        return f"```Score: {custom_format_score}\nFormat: {', '.join(custom_formats)}```"
+        return f"Score: {custom_format_score}\nFormat: {', '.join(custom_formats)}"
