@@ -73,57 +73,65 @@ class PlexWebhookHandler:
         return generate_embed()
     
     def embed_for_nowplaying(self):
-        description = f"{self.title} ({self.year})" if self.media_type == "Movie" else f"{self.title} (S{self.season_number}E{self.episode_number})"
-        embed = EmbedBuilder(title="Playing on Plex", description=f"{description}", color=0xe5a00d)
+        title = f"{self.title} ({self.year})" if self.media_type == "Movie" else f"{self.title} (S{self.season_number}E{self.episode_number})"
+        embed = EmbedBuilder(title=title, color=0xe5a00d)
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.product}", icon_url=PLEX_ICON)
+        embed.set_author(name="Playing on Plex", icon_url=PLEX_ICON)
+        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.product}")
         return embed
     
     def embed_for_nowresuming(self):
-        description = f"{self.title} ({self.year})" if self.media_type == "Movie" else f"{self.title} (S{self.season_number}E{self.episode_number})"
-        embed = EmbedBuilder(title="Resuming on Plex", description=f"{description}", color=0xe5a00d)
+        title = f"{self.title} ({self.year})" if self.media_type == "Movie" else f"{self.title} (S{self.season_number}E{self.episode_number})"
+        embed = EmbedBuilder(title=title, color=0xe5a00d)
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.product}", icon_url=PLEX_ICON)
+        embed.set_author(name="Resuming on Plex", icon_url=PLEX_ICON)
+        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.product}")
         return embed
     
     def embed_for_finished(self):
-        description = f"{self.title} ({self.year})" if self.media_type == "Movie" else f"{self.title} (S{self.season_number}E{self.episode_number})"
-        embed = EmbedBuilder(title="Finished on Plex", description=f"{description}", color=0xe5a00d)
+        title = f"{self.title} ({self.year})" if self.media_type == "Movie" else f"{self.title} (S{self.season_number}E{self.episode_number})"
+        embed = EmbedBuilder(title=title, color=0xe5a00d)
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.product}", icon_url=PLEX_ICON)
+        embed.set_author(name="Finished on Plex", icon_url=PLEX_ICON)
+        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.product}")
         return embed
     
     def embed_for_newcontent_episode(self):
-        description = f"{self.title} (S{self.season_number}E{self.episode_number})"
-        embed = EmbedBuilder(title="New Episode added to Plex", description=description, color=0xe5a00d)
+        title = f"{self.title} (S{self.season_number}E{self.episode_number})"
+        embed = EmbedBuilder(title=title, color=0xe5a00d)
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-        embed.set_footer(text=f"{self.server_name}", icon_url=PLEX_ICON)
+        embed.set_author(name="New Episode added to Plex", icon_url=PLEX_ICON)
+        embed.set_footer(text=f"{self.server_name}")
         return embed
     
     def embed_for_newcontent_season(self):
-        description = f"{self.title}\n\nSeason {self.season_number} ({self.episode_count} episodes)"
-        embed = EmbedBuilder(title="New Season added to Plex", description=description, color=0xe5a00d)
+        title = f"{self.title}"
+        embed = EmbedBuilder(title=title, color=0xe5a00d)
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-        embed.set_footer(text=f"{self.server_name}", icon_url=PLEX_ICON)
+        embed.add_field(name="Season", value=f"Season {self.season_number}", inline=True)
+        embed.add_field(name="Episodes", value=f"{self.episode_count}", inline=True)
+        embed.set_author(name="New Season added to Plex", icon_url=PLEX_ICON)
+        embed.set_footer(text=f"{self.server_name}")
         return embed
     
     def embed_for_newcontent_movie(self):
-        description = f"[{self.title} ({self.year})]({self.imdb_url})"
-        embed = EmbedBuilder(title="New Movie added to Plex", description=description, color=0xe5a00d)
+        title = f"{self.title} ({self.year})"
+        embed = EmbedBuilder(title=title, color=0xe5a00d)
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-        embed.set_footer(text=f"{self.genres}", icon_url=PLEX_ICON)
+        embed.set_author(name="New Movie added to Plex", icon_url=PLEX_ICON)
+        embed.set_footer(text=f"{self.genres}")
         return embed
     
     async def dispatch_embed(self):
