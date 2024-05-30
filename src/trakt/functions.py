@@ -4,6 +4,8 @@ from src.discord.embed import EmbedBuilder
 from api.trakt.client import TraktClient
 from utils.datetime import get_times
 
+from config.globals import TRAKT_ICON
+
 # Function to process recent ratings and send them to a specified Discord channel as embeds
 async def process_ratings(ratings_channel, username):
     client = TraktClient()
@@ -13,15 +15,29 @@ async def process_ratings(ratings_channel, username):
 
     async def process_rating(rating):
         description_formats = {
-            'show': f"**{rating.title}**\n\n{username} rated this {rating.type}\n{rating.rated} :star:",
-            'season': f"**{rating.show_title}**\nSeason {rating.season_id}\n\n{username} rated this {rating.type}\n{rating.rated} :star:",
-            'episode': f"**{rating.show_title} (S{rating.season_id}E{rating.episode_id})**\n{rating.title}\n\n{username} rated this {rating.type}\n{rating.rated} :star:",
-            'movie': f"**{rating.title} ({rating.year})**\n\n{username} rated this {rating.type}\n{rating.rated} :star:"
+            'show': f"{username} rated this {rating.type} {rating.rated} :star:",
+            'season': f"{username} rated this {rating.type} {rating.rated} :star:",
+            'episode': f"{username} rated this {rating.type} {rating.rated} :star:",
+            'movie': f"{username} rated this {rating.type} {rating.rated} :star:"
+        }
+        author_formats = {
+            'show': "A show has been rated on Trakt",
+            'season': "A season has been rated on Trakt",
+            'episode': "An episode has been rated on Trakt",
+            'movie': "A movie has been rated on Trakt"
+        }
+        title_formats = {
+            'show': f"{rating.show_title}",
+            'season': f"{rating.show_title} - Season {rating.season_id}",
+            'episode': f"{rating.show_title} - S{rating.season_id}E{rating.episode_id}",
+            'movie': f"{rating.title} ({rating.year})"
         }
         description = description_formats[rating.type]
-        embed_builder = EmbedBuilder(description=description, color=0xFF0000)
-        embed_builder.set_footer(text=rating.date)
+        author = author_formats[rating.type]
+        title = title_formats[rating.type]
+        embed_builder = EmbedBuilder(title=title, description=description, color=0xFF0000)
         embed_builder.set_thumbnail(url=rating.poster)
+        embed_builder.set_author(name=author, icon_url=TRAKT_ICON)
         await embed_builder.send_embed(ratings_channel)
 
     for rating in ratings:
@@ -36,15 +52,29 @@ async def process_favorites(favorites_channel, username):
 
     async def process_favorite(favorite):
         description_formats = {
-            'show': f"**{favorite.title}**\n\n{username} favorited this {favorite.type}",
-            'season': f"**{favorite.show_title}**\nSeason {favorite.season_id}\n\n{username} favorited this {favorite.type}",
-            'episode': f"**{favorite.show_title} (S{favorite.season_id}E{favorite.episode_id})**\n{favorite.title}\n\n{username} favorited this {favorite.type}",
-            'movie': f"**{favorite.title} ({favorite.year})**\n\n{username} favorited this {favorite.type}"
+            'show': f"{username} favorited this {favorite.type}",
+            'season': f"{username} favorited this {favorite.type}",
+            'episode': f"{username} favorited this {favorite.type}",
+            'movie': f"{username} favorited this {favorite.type}"
+        }
+        author_formats = {
+            'show': "A show has been favorited on Trakt",
+            'season': "A season has been favorited on Trakt",
+            'episode': "An episode has been favorited on Trakt",
+            'movie': "A movie has been favorited on Trakt"
+        }
+        title_formats = {
+            'show': f"{favorite.show_title}",
+            'season': f"{favorite.show_title} - Season {favorite.season_id}",
+            'episode': f"{favorite.show_title} - S{favorite.season_id}E{favorite.episode_id}",
+            'movie': f"{favorite.title} ({favorite.year})"
         }
         description = description_formats[favorite.type]
-        embed_builder = EmbedBuilder(description=description, color=0xFF0000)
-        embed_builder.set_footer(text=favorite.date)
+        author = author_formats[favorite.type]
+        title = title_formats[favorite.type]
+        embed_builder = EmbedBuilder(title=title, description=description, color=0xFF0000)
         embed_builder.set_thumbnail(url=favorite.poster)
+        embed_builder.set_author(name=author, icon_url=TRAKT_ICON)
         await embed_builder.send_embed(favorites_channel)
 
     for favorite in favorites:
