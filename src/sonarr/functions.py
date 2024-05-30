@@ -6,9 +6,12 @@ from config.globals import SONARR_ICON
 
 async def process_webhook(handler, channel):
     def build_grab_embed():
-        embed = EmbedBuilder(title="A new grab by Sonarr", description=f"```{handler.release_title}```\n{Formatter.format_custom_formats(handler.custom_format_score, handler.custom_formats)}", color=0xadd9c9)
+        embed = EmbedBuilder(title=handler.embed_title, color=0x9e7a18)
+        embed.add_field(name="Release", value=f"```{handler.release_title}```", inline=False)
+        embed.add_field(name="Custom Formats", value=f"```{Formatter.format_custom_formats(handler.custom_format_score, handler.custom_formats)}```", inline=False)
         embed.set_thumbnail(url=handler.poster)
-        embed.set_footer(text=f"{handler.quality} • {Converter.bytes_to_human_readable(handler.size)} • {handler.indexer}", icon_url=SONARR_ICON)
+        embed.set_author(name="A new grab by Sonarr", icon_url=SONARR_ICON)
+        embed.set_footer(text=f"{handler.quality} • {Converter.bytes_to_human_readable(handler.size)} • {handler.indexer}")
         return embed
 
     def build_download_embed():
