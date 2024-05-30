@@ -48,6 +48,6 @@ class DiscordBot:
             return
         try:
             await channel.send(embed=embed)
-            logger.info(f"Embed dispatched with title: {embed.title} and author: {embed.author.name}")
+            logger.info(f"Embed dispatched with title: {embed.title}")
         except Exception as e:
             logger.error(f"Error dispatching embed: {e}")

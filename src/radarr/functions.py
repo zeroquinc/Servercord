@@ -6,18 +6,9 @@ from config.globals import RADARR_ICON
 
 async def process_webhook(handler, channel):
     def build_grab_embed():
-        embed = EmbedBuilder(title=handler.embed_title, color=0x9e7a18)
-        embed.set_author(name=f"{handler.instance_name} - {handler.event_type}", icon_url=RADARR_ICON)
+        embed = EmbedBuilder(title="A new grab by Radarr", description=f"```{handler.release_title}```\n{Formatter.format_custom_formats(handler.custom_format_score, handler.custom_formats)}", color=0x9e7a18)
         embed.set_thumbnail(url=handler.poster)
-        fields = {
-            "Quality": (handler.quality, True),
-            "Size": (Converter.bytes_to_human_readable(handler.size), True),
-            "Indexer": (Formatter.indexer_value(handler.indexer), True),
-            "Release": (handler.release_title, False),
-            "Custom Formats": (Formatter.format_custom_formats(handler.custom_format_score, handler.custom_formats), False),
-        }
-        for name, (value, inline) in fields.items():
-            embed.add_field(name=name, value=value, inline=inline)
+        embed.set_footer(text=f"{handler.quality} • {Converter.bytes_to_human_readable(handler.size)} • {handler.indexer}", icon_url=RADARR_ICON)
         return embed
 
     def build_download_embed():

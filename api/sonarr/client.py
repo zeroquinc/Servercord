@@ -29,7 +29,8 @@ class SonarrWebhookHandler:
         self.custom_format_score = self.release_data.get('customFormatScore', 'N/A')
         self.custom_formats = self.release_data.get('customFormats', [])
         self.episode_count = len(self.episodes)
-        self.poster = TMDb.show_poster_path(self.tvdb_id)
+        if self.event_type != 'Test':
+            self.poster = TMDb.show_poster_path(self.tvdb_id)
 
     def check_request_type(self):
         if self.episode_count > 1:

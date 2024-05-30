@@ -27,8 +27,8 @@ class RadarrWebhookHandler:
         self.custom_format_score = self.release_data.get('customFormatScore', 'N/A')
         self.custom_formats = self.release_data.get('customFormats', [])
         self.tmdb_id = self.movie.get('tmdbId', 'N/A')
-        self.embed_title = f"{self.movie_title} ({self.movie_year})"
-        self.poster = TMDb.movie_poster_path(self.tmdb_id)
+        if self.event_type != 'Test':
+            self.poster = TMDb.movie_poster_path(self.tmdb_id)
 
     async def handle_webhook(self):
         logger.info(f"Processing Radarr webhook payload for event type: {self.event_type}")
