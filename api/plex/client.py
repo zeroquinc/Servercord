@@ -30,6 +30,7 @@ class PlexWebhookHandler:
         self.audience_rating = self.payload.get('source_metadata_details', {}).get('audience_rating', 'N/A')
         self.rating = self.payload.get('source_metadata_details', {}).get('rating', 'N/A')
         self.username = self.payload.get('stream_details', {}).get('username', 'N/A')
+        self.platform = self.payload.get('stream_details', {}).get('platform', 'N/A')
         self.player = self.payload.get('stream_details', {}).get('player', 'N/A')
         self.product = self.payload.get('stream_details', {}).get('product', 'N/A')
         self.video_decision = self.payload.get('stream_details', {}).get('video_decision', 'N/A').capitalize()
@@ -77,7 +78,7 @@ class PlexWebhookHandler:
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.player}", icon_url=PLEX_ICON)
+        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.platform}", icon_url=PLEX_ICON)
         return embed
     
     def embed_for_nowresuming(self):
@@ -86,7 +87,7 @@ class PlexWebhookHandler:
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.player}", icon_url=PLEX_ICON)
+        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.platform}", icon_url=PLEX_ICON)
         return embed
     
     def embed_for_finished(self):
@@ -95,7 +96,7 @@ class PlexWebhookHandler:
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.player}", icon_url=PLEX_ICON)
+        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.platform}", icon_url=PLEX_ICON)
         return embed
     
     def embed_for_newcontent_episode(self):
