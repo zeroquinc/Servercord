@@ -1,8 +1,8 @@
 import discord
 
 class EmbedBuilder:
-    def __init__(self, title='', description='', color=discord.Color.default()):
-        self.embed = discord.Embed(title=title, description=description, color=color)
+    def __init__(self, title='', description='', color=discord.Color.default(), url=''):
+        self.embed = discord.Embed(title=title, description=description, color=color, url=url)
 
     def set_author(self, name, icon_url=None, url=None):
         self.embed.set_author(name=name, icon_url=icon_url, url=url)
