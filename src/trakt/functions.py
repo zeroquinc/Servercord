@@ -1,8 +1,6 @@
-from utils.datetime import get_times
-
 from src.discord.embed import EmbedBuilder
 from api.trakt.client import TraktClient
-from utils.datetime import get_times
+from utils.datetime import TimeCalculator
 
 from config.globals import TRAKT_ICON
 
@@ -10,8 +8,8 @@ from config.globals import TRAKT_ICON
 async def process_ratings(ratings_channel, username):
     client = TraktClient()
     user = client.user(username)
-    now, one_hour_ago = get_times()
-    ratings = user.get_ratings(start_time=one_hour_ago, end_time=now)
+    now, then = TimeCalculator.get_time_ago(hours=1)
+    ratings = sorted(user.get_ratings(start_time=then, end_time=now), key=lambda rating: rating.date)
 
     async def process_rating(rating):
         description_formats = {
@@ -47,8 +45,8 @@ async def process_ratings(ratings_channel, username):
 async def process_favorites(favorites_channel, username):
     client = TraktClient()
     user = client.user(username)
-    now, one_hour_ago = get_times()
-    favorites = sorted(user.get_favorites(start_time=one_hour_ago, end_time=now), key=lambda favorite: favorite.date)
+    now, then = TimeCalculator.get_time_ago(hours=24)
+    favorites = sorted(user.get_favorites(start_time=then, end_time=now), key=lambda favorite: favorite.date)
 
     async def process_favorite(favorite):
         description_formats = {

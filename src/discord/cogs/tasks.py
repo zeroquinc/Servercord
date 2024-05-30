@@ -1,6 +1,9 @@
 from discord.ext import tasks, commands
+import asyncio
+from datetime import timedelta
 
 from utils.custom_logger import logger
+from utils.datetime import TimeCalculator
 from src.trakt.functions import process_ratings, process_favorites
 from config.globals import TRAKT_CHANNEL, TRAKT_USERNAME
 
@@ -18,7 +21,7 @@ class TasksCog(commands.Cog):
             await process_ratings(ratings_channel, TRAKT_USERNAME)
         except Exception as e:
             logger.error(f'Error processing recent Trakt ratings: {e}')
-    
+
     # Task to process recent Trakt favorites
     @tasks.loop(hours=24)
     async def trakt_favorites(self):
@@ -27,6 +30,18 @@ class TasksCog(commands.Cog):
             await process_favorites(favorites_channel, TRAKT_USERNAME)
         except Exception as e:
             logger.error(f'Error processing recent Trakt ratings: {e}')
+
+    @trakt_ratings.before_loop
+    async def before_trakt_ratings(self):
+        seconds = TimeCalculator.seconds_until_next_hour()
+        logger.info(f'Trakt ratings task will start in {str(timedelta(seconds=seconds))}')
+        await asyncio.sleep(seconds)
+
+    @trakt_favorites.before_loop
+    async def before_trakt_favorites(self):
+        seconds = TimeCalculator.seconds_until_next_day()
+        logger.info(f'Trakt favorites task will start in {str(timedelta(seconds=seconds))}')
+        await asyncio.sleep(seconds)
 
 async def setup(bot):
     logger.info('Cogs have been loaded')
