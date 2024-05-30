@@ -78,7 +78,7 @@ class PlexWebhookHandler:
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.platform}", icon_url=PLEX_ICON)
+        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.product}", icon_url=PLEX_ICON)
         return embed
     
     def embed_for_nowresuming(self):
@@ -87,7 +87,7 @@ class PlexWebhookHandler:
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.platform}", icon_url=PLEX_ICON)
+        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.product}", icon_url=PLEX_ICON)
         return embed
     
     def embed_for_finished(self):
@@ -96,7 +96,7 @@ class PlexWebhookHandler:
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.platform}", icon_url=PLEX_ICON)
+        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.product}", icon_url=PLEX_ICON)
         return embed
     
     def embed_for_newcontent_episode(self):
