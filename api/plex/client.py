@@ -1,9 +1,8 @@
 import json
 import discord
-from discord.utils import utcnow
 
-from config.globals import PLEX_ICON, DISCORD_THUMBNAIL, PLEX_PLAYING, PLEX_CONTENT
-
+from config.globals import PLEX_ICON, PLEX_PLAYING, PLEX_CONTENT
+from src.discord.embed import EmbedBuilder
 from utils.custom_logger import logger
 
 class PlexWebhookHandler:
@@ -26,20 +25,23 @@ class PlexWebhookHandler:
         self.poster_url = self.payload.get('source_metadata_details', {}).get('poster_url', 'N/A')
         self.imdb_url = self.payload.get('source_metadata_details', {}).get('imdb_url', 'N/A')
         self.tvdb_url = self.payload.get('source_metadata_details', {}).get('thetvdb_url', 'N/A')
+        self.trakt_url = self.payload.get('source_metadata_details', {}).get('trakt_url', 'N/A')
+        self.critic_rating = self.payload.get('source_metadata_details', {}).get('critic_rating', 'N/A')
+        self.audience_rating = self.payload.get('source_metadata_details', {}).get('audience_rating', 'N/A')
         self.rating = self.payload.get('source_metadata_details', {}).get('rating', 'N/A')
         self.username = self.payload.get('stream_details', {}).get('username', 'N/A')
+        self.player = self.payload.get('stream_details', {}).get('player', 'N/A')
         self.product = self.payload.get('stream_details', {}).get('product', 'N/A')
         self.video_decision = self.payload.get('stream_details', {}).get('video_decision', 'N/A').capitalize()
         self.remaining_time = self.payload.get('stream_details', {}).get('remaining_time', 'N/A')
         self.duration_time = self.payload.get('stream_details', {}).get('duration_time', 'N/A')
         self.server_name = self.payload.get('server_info', {}).get('server_name', 'N/A')
         self.webhook_type = self.payload.get('server_info', {}).get('webhook_type', 'N/A')
-        
+
     async def handle_webhook(self):
         logger.info(f"Processing Plex webhook payload for event type: {self.webhook_type}")
         logger.debug(f"Payload: {json.dumps(self.payload, indent=4)}")
-        channel_id = self.determine_channel_id()
-        await self.dispatch_embed(channel_id)
+        await self.dispatch_embed()
 
     def determine_channel_id(self):
         channel_ids = {
@@ -64,132 +66,70 @@ class PlexWebhookHandler:
         }
 
         # Get the embed creation method for the event type
-        generate_embed = embed_creators.get(self.webhook_type, self.embed_for_default)
+        generate_embed = embed_creators.get(self.webhook_type)
 
         # Call the embed creation method and return the embed
         return generate_embed()
     
-    def init_embed(self, title, color, author):
-        embed = discord.Embed(title=title, color=color)
-        embed.set_author(name=author, icon_url=PLEX_ICON)
-        embed.url = self.imdb_url if self.imdb_url != 'N/A' else self.tvdb_url
-        timestamp = utcnow()
-        embed.timestamp = timestamp
-        embed.set_image(url=DISCORD_THUMBNAIL)
-
-        return embed
-    
     def embed_for_nowplaying(self):
-        embed_title = f"{self.title} ({self.year})" if self.media_type == "Movie" else f"{self.title} (S{self.season_number}E{self.episode_number})"
-        embed = self.init_embed(embed_title, 0x1C4673, f"Plex - Streaming {self.media_type}")
-
+        description = f"{self.title} ({self.year})" if self.media_type == "Movie" else f"{self.title} (S{self.season_number}E{self.episode_number})"
+        embed = EmbedBuilder(title="Playing on Plex", description=f"{description}", color=0xe5a00d)
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-        
-        embed.add_field(name=":arrow_forward: Now Streaming", value=f"{self.remaining_time} remaining", inline=True)
-        embed.set_footer(text=f"{self.server_name} | {self.username} | {self.product} | {self.video_decision}")
-
+        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.player}", icon_url=PLEX_ICON)
         return embed
     
     def embed_for_nowresuming(self):
-        embed_title = f"{self.title} ({self.year})" if self.media_type == "Movie" else f"{self.title} (S{self.season_number}E{self.episode_number})"
-        embed = self.init_embed(embed_title, 0x3587DE, f"Plex - Streaming {self.media_type}")
-
+        description = f"{self.title} ({self.year})" if self.media_type == "Movie" else f"{self.title} (S{self.season_number}E{self.episode_number})"
+        embed = EmbedBuilder(title="Resuming on Plex", description=f"{description}", color=0xe5a00d)
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-        
-        embed.add_field(name=":play_pause: Now Resuming", value=f"{self.remaining_time} remaining", inline=True)
-        embed.set_footer(text=f"{self.server_name} | {self.username} | {self.product} | {self.video_decision}")
-
+        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.player}", icon_url=PLEX_ICON)
         return embed
     
     def embed_for_finished(self):
-        embed_title = f"{self.title} ({self.year})" if self.media_type == "Movie" else f"{self.title} (S{self.season_number}E{self.episode_number})"
-        embed = self.init_embed(embed_title, 0x891836, f"Plex - Streaming {self.media_type}")
-
+        description = f"{self.title} ({self.year})" if self.media_type == "Movie" else f"{self.title} (S{self.season_number}E{self.episode_number})"
+        embed = EmbedBuilder(title="Finished on Plex", description=f"{description}", color=0xe5a00d)
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-        
-        embed.add_field(name=":white_check_mark: Finished", value=f"{self.duration_time} total", inline=True)
-        embed.set_footer(text=f"{self.server_name} | {self.username} | {self.product} | {self.video_decision}")
-
+        embed.set_footer(text=f"{self.username} • {self.video_decision} • {self.player}", icon_url=PLEX_ICON)
         return embed
     
     def embed_for_newcontent_episode(self):
-        embed_title = f"{self.title} (S{self.season_number}E{self.episode_number})"
-        embed = self.init_embed(embed_title, 0xE91655, "Plex - New Episode")
-        embed.description = self.summary
-
+        description = f"{self.title} (S{self.season_number}E{self.episode_number})\nTMDb: {self.rating}"
+        embed = EmbedBuilder(title="New Episode added to Plex", description=description, color=0xe5a00d)
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-
-        fields = {
-            "Quality": (self.quality, True),
-            "Runtime": (self.remaining_time, True),
-            "Air date": (self.air_date, True),
-            }
-
-        for name, (value, inline) in fields.items():
-            embed.add_field(name=name, value=value, inline=inline)
-
-        embed.set_footer(text=self.server_name)
-
+        embed.set_footer(text=f"{self.server_name}", icon_url=PLEX_ICON)
         return embed
     
     def embed_for_newcontent_season(self):
-        embed_title = self.title
-        embed = self.init_embed(embed_title, 0x169CE9, "Plex - New Season")
-        embed.description = self.summary
-
+        description = f"{self.title}\n\nSeason {self.season_number} ({self.episode_count} episodes)"
+        embed = EmbedBuilder(title="New Season added to Plex", description=description, color=0xe5a00d)
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-
-        fields = {
-            "Season": (self.season_number, True),
-            "Episodes": (self.episode_count, True),
-            "Details": (f"[IMDb]({self.imdb_url})", True),
-            }
-
-        for name, (value, inline) in fields.items():
-            embed.add_field(name=name, value=value, inline=inline)
-
-        embed.set_footer(text=self.server_name)
-
+        embed.set_footer(text=f"{self.server_name}", icon_url=PLEX_ICON)
         return embed
     
     def embed_for_newcontent_movie(self):
-        embed_title = f"{self.title} ({self.year})"
-        embed = self.init_embed(embed_title, 0x7CE916, "Plex - New Movie")
-        embed.description = self.summary
-
+        description = f"[{self.title} ({self.year})]({self.imdb_url})\n\nRotten Tomatoes: {self.rating} :popcorn:\nIMDb: {self.audience_rating} :popcorn:"
+        embed = EmbedBuilder(title="New Movie added to Plex", description=description, color=0xe5a00d)
         poster_path = self.poster_url
         if poster_path:
             embed.set_thumbnail(url=poster_path)
-
-        fields = {
-            "Quality": (self.quality, True),
-            "Genres": (self.genres, True),
-            "Release date": (self.release_date, True),
-            "Rotten Tomatoes": (f":popcorn: {self.rating}", True),
-            "Runtime": (self.remaining_time, True),
-        }
-
-        for name, (value, inline) in fields.items():
-            embed.add_field(name=name, value=value, inline=inline)
-
-        embed.set_footer(text=self.server_name)
-
-        return embed
-
-    def embed_for_default(self):
-        embed = discord.Embed (title=" ")
+        embed.set_footer(text=f"{self.genres}", icon_url=PLEX_ICON)
         return embed
     
-    async def dispatch_embed(self, channel_id):
+    async def dispatch_embed(self):
         embed = self.generate_embed()
-        await self.discord_bot.dispatch_embed(channel_id, embed)
+        channel_id = self.determine_channel_id()
+        channel = self.discord_bot.bot.get_channel(channel_id)  # Get the Channel object using the ID
+        if channel:
+            await embed.send_embed(channel)
+        else:
+            logger.error(f"Channel with ID {channel_id} not found.")
