@@ -87,7 +87,7 @@ class PlexWebhookHandler:
     def get_description(self):
         descriptions = {
             'newcontent_episode': '',
-            'newcontent_season': self.genres,
+            'newcontent_season': '',
             'newcontent_movie': self.genres,
         }
         return descriptions.get(self.webhook_type, '')
