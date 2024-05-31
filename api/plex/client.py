@@ -72,7 +72,6 @@ class PlexWebhookHandler:
         if self.poster_url:
             embed.set_thumbnail(url=self.poster_url)
         if self.webhook_type == 'newcontent_season':
-            embed.add_field(name="Season", value=f"Season {self.season_num00}", inline=True)
             embed.add_field(name="Episodes", value=f"{self.episode_count}", inline=True)
         embed.set_author(name=f"New {self.media_type.capitalize()} added to Plex", icon_url=PLEX_ICON)
         return embed
@@ -80,7 +79,7 @@ class PlexWebhookHandler:
     def get_newcontent_title(self):
         titles = {
             'newcontent_episode': f"{self.title} (S{self.season_num00}E{self.episode_num00})",
-            'newcontent_season': f"{self.title} - Season {self.season_num00}",
+            'newcontent_season': f"{self.title}",
             'newcontent_movie': f"{self.title} ({self.year})"
         }
         return titles.get(self.webhook_type, self.title)
