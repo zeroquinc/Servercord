@@ -12,50 +12,28 @@ class HandleWebHook:
         self.host = host
         self.port = port
         self.app = web.Application()
-        self.app.router.add_post('/sonarr_webhook', self.handle_sonarr)
-        self.app.router.add_post('/radarr_webhook', self.handle_radarr)
-        self.app.router.add_post('/plex_webhook', self.handle_plex)
+        self.app.router.add_post('/sonarr_webhook', self.handle_webhook(SonarrWebhookHandler))
+        self.app.router.add_post('/radarr_webhook', self.handle_webhook(RadarrWebhookHandler))
+        self.app.router.add_post('/plex_webhook', self.handle_webhook(PlexWebhookHandler))
         self.uvicorn_params = {
             "host": self.host,
             "port": self.port,
             "access_log": False,
         }
 
-    # Handle Sonarr webhook
-    async def handle_sonarr(self, request):
-        try:
-            payload = await request.json()
-            sonarr_handler = SonarrWebhookHandler(payload, self.discord_bot)
-            await sonarr_handler.handle_webhook()
-        except Exception as e:
-            logger.error(f"Error handling Sonarr webhook: {e}")
-            return web.Response(text='Error', status=500)
+    # Handle webhook
+    def handle_webhook(self, Handler):
+        async def handler(request):
+            try:
+                payload = await request.json()
+                handler = Handler(payload, self.discord_bot)
+                await handler.handle_webhook()
+            except Exception as e:
+                logger.error(f"Error handling webhook: {e}")
+                return web.Response(text='Error', status=500)
 
-        return web.Response(text='OK')
-    
-    # Handle Radarr webhook
-    async def handle_radarr(self, request):
-        try:
-            payload = await request.json()
-            radarr_handler = RadarrWebhookHandler(payload, self.discord_bot)
-            await radarr_handler.handle_webhook()
-        except Exception as e:
-            logger.error(f"Error handling Radarr webhook: {e}")
-            return web.Response(text='Error', status=500)
-
-        return web.Response(text='OK')
-    
-    # Handle Plex webhook
-    async def handle_plex(self, request):
-        try:
-            payload = await request.json()
-            plex_handler = PlexWebhookHandler(payload, self.discord_bot)
-            await plex_handler.handle_webhook()
-        except Exception as e:
-            logger.error(f"Error handling Plex webhook: {e}")
-            return web.Response(text='Error', status=500)
-
-        return web.Response(text='OK')
+            return web.Response(text='OK')
+        return handler
 
     # Start the webhook receiver
     async def start(self):
@@ -67,7 +45,6 @@ class HandleWebHook:
             logger.info(f"Server started at http://{self.host}:{self.port}")
         except Exception as e:
             logger.error(f"Error starting the server: {e}")
-
 
     # Cleanup the webhook receiver
     async def cleanup(self):
