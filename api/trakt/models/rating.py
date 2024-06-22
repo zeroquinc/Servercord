@@ -81,7 +81,7 @@ class Season:
 
 class Show:
     def __init__(self, data):
-        self.title = data['show']['title']
+        self.show_title = data['show']['title']
         self.year = data['show']['year']
         self.slug = data['show']['ids']['slug']
         self.trakt_id = data['show']['ids']['trakt']

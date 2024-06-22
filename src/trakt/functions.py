@@ -12,12 +12,6 @@ async def process_ratings(ratings_channel, username):
     ratings = sorted(user.get_ratings(start_time=then, end_time=now), key=lambda rating: rating.date)
 
     async def process_rating(rating):
-        description_formats = {
-            'show': f"{username} rated this {rating.type} {rating.rated} :star:",
-            'season': f"{username} rated this {rating.type} {rating.rated} :star:",
-            'episode': f"{username} rated this {rating.type} {rating.rated} :star:",
-            'movie': f"{username} rated this {rating.type} {rating.rated} :star:"
-        }
         author_formats = {
             'show': "A show has been rated on Trakt",
             'season': "A season has been rated on Trakt",
@@ -30,7 +24,7 @@ async def process_ratings(ratings_channel, username):
             'episode': f"{rating.show_title} - S{rating.season_id}E{rating.episode_id}",
             'movie': f"{rating.title} ({rating.year})"
         }
-        description = description_formats[rating.type]
+        description = f"{username} rated this {rating.type} {rating.rated} :star:"
         author = author_formats[rating.type]
         title = title_formats[rating.type]
         embed_builder = EmbedBuilder(title=title, description=description, color=0xFF0000)
