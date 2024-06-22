@@ -13,24 +13,27 @@ class SonarrWebhookHandler:
         self.check_request_type()
 
     def initialize_global_variables(self):
-        self.event_type = self.payload.get('eventType', 'N/A')
-        self.instance_name = self.payload.get('instanceName', 'N/A')
-        self.old_version = self.payload.get('previousVersion', 'N/A')
-        self.new_version = self.payload.get('newVersion', 'N/A')
-        self.series = self.payload.get('series', {})
-        self.series_title = self.series.get('title', 'N/A')
-        self.release_data = self.payload.get('release', {})
-        self.episodes = self.payload.get('episodes', {})
-        self.tvdb_id = self.series.get('tvdbId', 'N/A')
-        self.quality = self.release_data.get('quality', 'N/A')
-        self.size = self.release_data.get('size', 'N/A')
-        self.indexer = self.release_data.get('indexer', 'N/A')
-        self.release_title = self.release_data.get('releaseTitle', 'N/A')
-        self.custom_format_score = self.release_data.get('customFormatScore', 'N/A')
-        self.custom_formats = self.release_data.get('customFormats', [])
-        self.episode_count = len(self.episodes)
-        if self.event_type != 'Test':
-            self.poster = TMDb.show_poster_path(self.tvdb_id)
+        try:
+            self.event_type = self.payload.get('eventType', 'N/A')
+            self.instance_name = self.payload.get('instanceName', 'N/A')
+            self.old_version = self.payload.get('previousVersion', 'N/A')
+            self.new_version = self.payload.get('newVersion', 'N/A')
+            self.series = self.payload.get('series', {})
+            self.series_title = self.series.get('title', 'N/A')
+            self.release_data = self.payload.get('release', {})
+            self.episodes = self.payload.get('episodes', [])
+            self.tvdb_id = self.series.get('tvdbId', 'N/A')
+            self.quality = self.release_data.get('quality', 'N/A')
+            self.size = self.release_data.get('size', 'N/A')
+            self.indexer = self.release_data.get('indexer', 'N/A')
+            self.release_title = self.release_data.get('releaseTitle', 'N/A')
+            self.custom_format_score = self.release_data.get('customFormatScore', 'N/A')
+            self.custom_formats = self.release_data.get('customFormats', [])
+            self.episode_count = len(self.episodes)
+            if self.event_type != 'Test' and self.tvdb_id != 'N/A':
+                self.poster = TMDb.show_poster_path(self.tvdb_id)
+        except Exception as e:
+            logger.error(f"Error initializing global variables: {e}")
 
     def check_request_type(self):
         if self.episode_count > 1:
