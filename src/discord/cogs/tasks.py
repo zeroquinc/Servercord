@@ -5,7 +5,7 @@ from datetime import timedelta
 from utils.custom_logger import logger
 from utils.datetime import TimeCalculator
 from src.trakt.functions import process_ratings, process_favorites
-from config.globals import TRAKT_CHANNEL, TRAKT_USERNAME
+from config.globals import TRAKT_CHANNEL, TRAKT_USERNAME, ENABLE_DELAY
 
 class TasksCog(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -33,15 +33,17 @@ class TasksCog(commands.Cog):
 
     @trakt_ratings.before_loop
     async def before_trakt_ratings(self):
-        seconds = TimeCalculator.seconds_until_next_hour()
-        logger.info(f'Trakt ratings task will start in {str(timedelta(seconds=seconds))}')
-        await asyncio.sleep(seconds)
+        if ENABLE_DELAY:
+            seconds = TimeCalculator.seconds_until_next_hour()
+            logger.info(f'Trakt ratings task will start in {str(timedelta(seconds=seconds))}')
+            await asyncio.sleep(seconds)
 
     @trakt_favorites.before_loop
     async def before_trakt_favorites(self):
-        seconds = TimeCalculator.seconds_until_next_day()
-        logger.info(f'Trakt favorites task will start in {str(timedelta(seconds=seconds))}')
-        await asyncio.sleep(seconds)
+        if ENABLE_DELAY:
+            seconds = TimeCalculator.seconds_until_next_day()
+            logger.info(f'Trakt favorites task will start in {str(timedelta(seconds=seconds))}')
+            await asyncio.sleep(seconds)
 
 async def setup(bot):
     logger.info('Cogs have been loaded')
