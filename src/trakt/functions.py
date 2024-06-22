@@ -29,7 +29,7 @@ async def process_ratings(ratings_channel, username):
         description = f"{username} rated this {rating.type} {rating.rated} :star:"
         author = author_formats[rating.type]
         title = title_formats[rating.type]
-        embed_builder = EmbedBuilder(title=title, description=description, color=0xFF0000)
+        embed_builder = EmbedBuilder(title=title, description=description, color=0xFF0000, url=rating.url)
         embed_builder.set_thumbnail(url=rating.poster)
         embed_builder.set_author(name=author, icon_url=TRAKT_ICON)
 
@@ -63,7 +63,7 @@ async def process_favorites(favorites_channel, username):
         description = f"{username} favorited this {favorite.type}"
         author = author_formats[favorite.type]
         title = title_formats[favorite.type]
-        embed_builder = EmbedBuilder(title=title, description=description, color=0xFF0000)
+        embed_builder = EmbedBuilder(title=title, description=description, color=0xFF0000, url=favorite.url)
         embed_builder.set_thumbnail(url=favorite.poster)
         embed_builder.set_author(name=author, icon_url=TRAKT_ICON)
 

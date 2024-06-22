@@ -20,6 +20,7 @@ class Favorite:
         self.tvdb_id = None
         self.poster = None
         self.slug = None
+        self.url = None
         media = create_media(data)
         self.set_media_attributes(media)
 
@@ -27,6 +28,7 @@ class Favorite:
         self.title = media.title
         self.year = media.year
         self.poster = media.poster
+        self.url = media.url
     
         if isinstance(media, (Episode, Season)):
             self.show_title = media.show_title
