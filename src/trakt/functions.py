@@ -4,6 +4,8 @@ from utils.datetime import TimeCalculator
 
 from config.globals import TRAKT_ICON
 
+from utils.custom_logger import logger
+
 # Function to process recent ratings and send them to a specified Discord channel as embeds
 async def process_ratings(ratings_channel, username):
     client = TraktClient()
@@ -30,11 +32,14 @@ async def process_ratings(ratings_channel, username):
         embed_builder = EmbedBuilder(title=title, description=description, color=0xFF0000)
         embed_builder.set_thumbnail(url=rating.poster)
         embed_builder.set_author(name=author, icon_url=TRAKT_ICON)
+
+        logger.info(f"Sending rating embed to Discord: {title} - {description}")
+
         await embed_builder.send_embed(ratings_channel)
 
     for rating in ratings:
         await process_rating(rating)
-        
+
 # Function to process recent favorites and send them to a specified Discord channel as embeds
 async def process_favorites(favorites_channel, username):
     client = TraktClient()
@@ -43,12 +48,6 @@ async def process_favorites(favorites_channel, username):
     favorites = sorted(user.get_favorites(start_time=then, end_time=now), key=lambda favorite: favorite.date)
 
     async def process_favorite(favorite):
-        description_formats = {
-            'show': f"{username} favorited this {favorite.type}",
-            'season': f"{username} favorited this {favorite.type}",
-            'episode': f"{username} favorited this {favorite.type}",
-            'movie': f"{username} favorited this {favorite.type}"
-        }
         author_formats = {
             'show': "A show has been favorited on Trakt",
             'season': "A season has been favorited on Trakt",
@@ -61,12 +60,15 @@ async def process_favorites(favorites_channel, username):
             'episode': f"{favorite.show_title} - S{favorite.season_id}E{favorite.episode_id}",
             'movie': f"{favorite.title} ({favorite.year})"
         }
-        description = description_formats[favorite.type]
+        description = f"{username} favorited this {favorite.type}"
         author = author_formats[favorite.type]
         title = title_formats[favorite.type]
         embed_builder = EmbedBuilder(title=title, description=description, color=0xFF0000)
         embed_builder.set_thumbnail(url=favorite.poster)
         embed_builder.set_author(name=author, icon_url=TRAKT_ICON)
+
+        logger.info(f"Sending favorite embed to Discord: {title} - {description}")
+
         await embed_builder.send_embed(favorites_channel)
 
     for favorite in favorites:
