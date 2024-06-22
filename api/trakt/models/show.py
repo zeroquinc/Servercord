@@ -10,4 +10,5 @@ class Show:
         self.imdb_id = show_data['ids']['imdb']
         self.tmdb_id = show_data['ids']['tmdb']
         self.tvdb_id = show_data['ids']['tvdb']
+        self.url = f"https://trakt.tv/shows/{self.slug}"
         self.poster = TMDb.show_poster_path(self.tvdb_id)
