@@ -26,14 +26,15 @@ async def process_ratings(ratings_channel, username):
             'episode': f"{rating.show_title} - S{rating.season_id}E{rating.episode_id}",
             'movie': f"{rating.title} ({rating.year})"
         }
-        description = f"{username} rated this {rating.type} {rating.rated} :star:"
         author = author_formats[rating.type]
         title = title_formats[rating.type]
-        embed_builder = EmbedBuilder(title=title, description=description, color=0xFF0000, url=rating.url)
+        embed_builder = EmbedBuilder(title=title, color=0xFF0000, url=rating.url)
+        embed_builder.add_field(name="User", value=f"[{username}](https://trakt.tv/users/{username})", inline=True)
+        embed_builder.add_field(name="Rating", value=f"{rating.rated} :star:", inline=True)
         embed_builder.set_thumbnail(url=rating.poster)
         embed_builder.set_author(name=author, icon_url=TRAKT_ICON)
 
-        logger.info(f"Sending rating embed to Discord: {title} - {description}")
+        logger.info(f"Sending rating embed to Discord: {title}")
 
         await embed_builder.send_embed(ratings_channel)
 
@@ -60,14 +61,14 @@ async def process_favorites(favorites_channel, username):
             'episode': f"{favorite.show_title} - S{favorite.season_id}E{favorite.episode_id}",
             'movie': f"{favorite.title} ({favorite.year})"
         }
-        description = f"{username} favorited this {favorite.type}"
         author = author_formats[favorite.type]
         title = title_formats[favorite.type]
-        embed_builder = EmbedBuilder(title=title, description=description, color=0xFF0000, url=favorite.url)
+        embed_builder = EmbedBuilder(title=title, color=0xFF0000, url=favorite.url)
+        embed_builder.add_field(name="User", value=f"[{username}](https://trakt.tv/users/{username})", inline=True)
         embed_builder.set_thumbnail(url=favorite.poster)
         embed_builder.set_author(name=author, icon_url=TRAKT_ICON)
 
-        logger.info(f"Sending favorite embed to Discord: {title} - {description}")
+        logger.info(f"Sending favorite embed to Discord: {title}")
 
         await embed_builder.send_embed(favorites_channel)
 
