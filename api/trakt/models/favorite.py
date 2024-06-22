@@ -34,6 +34,9 @@ class Favorite:
     
         if isinstance(media, Episode):
             self.episode_id = media.episode_id
+            
+        if isinstance(media, Show):
+            self.show_title = media.title
 
     @classmethod
     def from_json(cls, data):
