@@ -40,16 +40,15 @@ class TasksCog(commands.Cog):
             space = get_disk_space()
             guild_id = DISCORD_SERVER_ID
             guild = await self.bot.fetch_guild(guild_id)
-            logger.info(f"Guild ID: {guild_id}, Space: {space}")
     
             if guild is not None:
                 disk_space_channel = next((channel for channel in guild.channels if "Disk Space" in channel.name), None)
     
                 if disk_space_channel is not None:
                     # Truncate or format the space string to fit Discord channel name limitations here if necessary
-                    await disk_space_channel.edit(name=f"Disk Space - {space}")
+                    await disk_space_channel.edit(name=f"Free: {space}")
                 else:
-                    await guild.create_voice_channel(name=f"Disk Space - {space}")
+                    await guild.create_voice_channel(name=f"Free: {space}")
             else:
                 logger.info(f"Guild with ID {guild_id} not found.")
         except Exception as e:
