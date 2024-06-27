@@ -5,6 +5,7 @@ from datetime import timedelta
 from utils.custom_logger import logger
 from utils.datetime import TimeCalculator
 from src.trakt.functions import process_ratings, process_favorites
+from src.linux.disk_space import get_disk_space
 from config.globals import TRAKT_CHANNEL, TRAKT_USERNAME, ENABLE_DELAY, DISCORD_SERVER_ID
 
 class TasksCog(commands.Cog):
@@ -34,9 +35,10 @@ class TasksCog(commands.Cog):
     # Task to update the disk space channel
     @tasks.loop(hours=12)
     async def update_disk_space_channel(self):
-        space = self.get_disk_space()
+        space = get_disk_space()
         guild_id = DISCORD_SERVER_ID
         guild = self.bot.get_guild(guild_id)
+        logger.info(f"Guild ID: {guild_id}, Space: {space}")
 
         if guild is not None:
             # Check for any channel with "Disk Space" in its name
@@ -49,7 +51,7 @@ class TasksCog(commands.Cog):
                 # If no "Disk Space" channel exists, create a new voice channel
                 await guild.create_voice_channel(name=space)
         else:
-            print(f"Guild with ID {guild_id} not found.")
+            logger.info(f"Guild with ID {guild_id} not found.")
 
     @trakt_ratings.before_loop
     async def before_trakt_ratings(self):
