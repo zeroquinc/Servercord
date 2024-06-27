@@ -1,3 +1,4 @@
+import discord
 from discord.ext import tasks, commands
 import asyncio
 from datetime import timedelta
@@ -5,13 +6,15 @@ from datetime import timedelta
 from utils.custom_logger import logger
 from utils.datetime import TimeCalculator
 from src.trakt.functions import process_ratings, process_favorites
-from config.globals import TRAKT_CHANNEL, TRAKT_USERNAME, ENABLE_DELAY
+from src.linux.disk_space import get_disk_space
+from config.globals import TRAKT_CHANNEL, TRAKT_USERNAME, ENABLE_DELAY, DISCORD_SERVER_ID
 
 class TasksCog(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.trakt_ratings.start()
         self.trakt_favorites.start()
+        self.update_disk_space_channel.start()
 
     # Task to process recent Trakt ratings
     @tasks.loop(minutes=60)
@@ -30,6 +33,37 @@ class TasksCog(commands.Cog):
             await process_favorites(favorites_channel, TRAKT_USERNAME)
         except Exception as e:
             logger.error(f'Error processing recent Trakt ratings: {e}')
+
+    # Task to update the disk space channel
+    @tasks.loop(hours=12)
+    async def update_disk_space_channel(self):
+        try:
+            space = get_disk_space()
+            guild_id = DISCORD_SERVER_ID
+            guild = await self.bot.fetch_guild(guild_id)
+
+            if guild is not None:
+                # Explicitly fetch channels to ensure we have the latest state
+                channels = await guild.fetch_channels()
+                # Log all channel names for debugging
+                logger.debug(f"All channels: {[channel.name for channel in channels]}")
+
+                # Look for a channel that starts with "HDD:"
+                disk_space_channel = next((channel for channel in channels if channel.name.startswith("HDD:")), None)
+
+                if disk_space_channel is not None:
+                    logger.info(f"Found existing channel: {disk_space_channel.name}")
+                    await disk_space_channel.edit(name=f"HDD: {space}")
+                else:
+                    logger.info("No existing HDD: channel found, creating a new one.")
+                    overwrites = {
+                        guild.default_role: discord.PermissionOverwrite(connect=False)
+                    }
+                    await guild.create_voice_channel(name=f"HDD: {space}", overwrites=overwrites)
+            else:
+                logger.info(f"Guild with ID {guild_id} not found.")
+        except Exception as e:
+            logger.error(f"Failed to update disk space channel: {e}")
 
     @trakt_ratings.before_loop
     async def before_trakt_ratings(self):
