@@ -1,3 +1,4 @@
+import discord
 from discord.ext import tasks, commands
 import asyncio
 from datetime import timedelta
@@ -42,13 +43,19 @@ class TasksCog(commands.Cog):
             guild = await self.bot.fetch_guild(guild_id)
     
             if guild is not None:
-                disk_space_channel = next((channel for channel in guild.channels if "Disk Space" in channel.name), None)
+                disk_space_channel = next((channel for channel in guild.channels if "HDD:" in channel.name), None)
+    
+                # Define the permission overwrite for @everyone role to disallow connect
+                overwrites = {
+                    guild.default_role: discord.PermissionOverwrite(connect=False)
+                }
     
                 if disk_space_channel is not None:
-                    # Truncate or format the space string to fit Discord channel name limitations here if necessary
-                    await disk_space_channel.edit(name=f"Free: {space}")
+                    # Edit the existing channel with the updated permissions
+                    await disk_space_channel.edit(name=f"HDD: {space}", overwrites=overwrites)
                 else:
-                    await guild.create_voice_channel(name=f"Free: {space}")
+                    # Create a new voice channel with the specified permissions
+                    await guild.create_voice_channel(name=f"HDD: {space}", overwrites=overwrites)
             else:
                 logger.info(f"Guild with ID {guild_id} not found.")
         except Exception as e:
