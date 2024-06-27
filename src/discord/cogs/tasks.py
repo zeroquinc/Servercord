@@ -39,7 +39,7 @@ class TasksCog(commands.Cog):
         try:
             space = get_disk_space()
             guild_id = DISCORD_SERVER_ID
-            guild = self.bot.get_guild(guild_id)
+            guild = await self.bot.fetch_guild(guild_id)
             logger.info(f"Guild ID: {guild_id}, Space: {space}")
     
             if guild is not None:
