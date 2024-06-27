@@ -43,22 +43,22 @@ class TasksCog(commands.Cog):
             guild = await self.bot.fetch_guild(guild_id)
 
             if guild is not None:
+                # Explicitly fetch channels to ensure we have the latest state
+                channels = await guild.fetch_channels()
+                # Log all channel names for debugging
+                logger.debug(f"All channels: {[channel.name for channel in channels]}")
+
                 # Look for a channel that starts with "HDD:"
-                disk_space_channel = next((channel for channel in guild.channels if channel.name.startswith("HDD:")), None)
+                disk_space_channel = next((channel for channel in channels if channel.name.startswith("HDD:")), None)
 
                 if disk_space_channel is not None:
-                    # Log found channel for debugging
                     logger.info(f"Found existing channel: {disk_space_channel.name}")
-                    # Edit the existing channel
                     await disk_space_channel.edit(name=f"HDD: {space}")
                 else:
-                    # Log that no channel was found and a new one will be created
                     logger.info("No existing HDD: channel found, creating a new one.")
-                    # Define the permission overwrite for @everyone role to disallow connect
                     overwrites = {
                         guild.default_role: discord.PermissionOverwrite(connect=False)
                     }
-                    # Create a new voice channel with the specified permissions
                     await guild.create_voice_channel(name=f"HDD: {space}", overwrites=overwrites)
             else:
                 logger.info(f"Guild with ID {guild_id} not found.")
