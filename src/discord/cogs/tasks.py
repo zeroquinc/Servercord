@@ -30,10 +30,10 @@ class TasksCog(commands.Cog):
             await process_favorites(favorites_channel, TRAKT_USERNAME)
         except Exception as e:
             logger.error(f'Error processing recent Trakt ratings: {e}')
-            
+
+    # Task to update the disk space channel
     @tasks.loop(hours=12)
     async def update_disk_space_channel(self):
-        await self.bot.wait_until_ready()
         space = self.get_disk_space()
         guild_id = DISCORD_SERVER_ID
         guild = self.bot.get_guild(guild_id)
