@@ -35,23 +35,24 @@ class TasksCog(commands.Cog):
     # Task to update the disk space channel
     @tasks.loop(hours=12)
     async def update_disk_space_channel(self):
-        space = get_disk_space()
-        guild_id = DISCORD_SERVER_ID
-        guild = self.bot.get_guild(guild_id)
-        logger.info(f"Guild ID: {guild_id}, Space: {space}")
-
-        if guild is not None:
-            # Check for any channel with "Disk Space" in its name
-            disk_space_channel = next((channel for channel in guild.channels if "Disk Space" in channel.name), None)
-
-            if disk_space_channel is not None:
-                # If a "Disk Space" channel exists, update its name
-                await disk_space_channel.edit(name=space)
+        try:
+            space = get_disk_space()
+            guild_id = DISCORD_SERVER_ID
+            guild = self.bot.get_guild(guild_id)
+            logger.info(f"Guild ID: {guild_id}, Space: {space}")
+    
+            if guild is not None:
+                disk_space_channel = next((channel for channel in guild.channels if "Disk Space" in channel.name), None)
+    
+                if disk_space_channel is not None:
+                    # Truncate or format the space string to fit Discord channel name limitations here if necessary
+                    await disk_space_channel.edit(name=f"Disk Space - {space}")
+                else:
+                    await guild.create_voice_channel(name=f"Disk Space - {space}")
             else:
-                # If no "Disk Space" channel exists, create a new voice channel
-                await guild.create_voice_channel(name=space)
-        else:
-            logger.info(f"Guild with ID {guild_id} not found.")
+                logger.info(f"Guild with ID {guild_id} not found.")
+        except Exception as e:
+            logger.error(f"Failed to update disk space channel: {e}")
 
     @trakt_ratings.before_loop
     async def before_trakt_ratings(self):

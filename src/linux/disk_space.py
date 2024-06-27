@@ -1,5 +1,7 @@
 import subprocess
 
+from utils.custom_logger import logger
+
 def get_disk_space() -> str:
     target_partition = '/dev/sdb'
     
@@ -28,6 +30,7 @@ def get_disk_space() -> str:
             
             available_space_gb = values[available_space_index].rstrip('G')
             total_space_gb = values[total_space_index].rstrip('G')
+            logger.info(f"Available space: {available_space_gb} GB, Total space: {total_space_gb} GB")
             return f"{available_space_gb} GB / {total_space_gb} GB"
     
     return f"No data found for {target_partition}"
