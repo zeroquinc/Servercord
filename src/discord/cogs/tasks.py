@@ -41,20 +41,23 @@ class TasksCog(commands.Cog):
             space = get_disk_space()
             guild_id = DISCORD_SERVER_ID
             guild = await self.bot.fetch_guild(guild_id)
-    
+
             if guild is not None:
                 # Look for a channel that starts with "HDD:"
                 disk_space_channel = next((channel for channel in guild.channels if channel.name.startswith("HDD:")), None)
-    
-                # Define the permission overwrite for @everyone role to disallow connect
-                overwrites = {
-                    guild.default_role: discord.PermissionOverwrite(connect=False)
-                }
-    
+
                 if disk_space_channel is not None:
-                    # Edit the existing channel with the updated permissions
-                    await disk_space_channel.edit(name=f"HDD: {space}", overwrites=overwrites)
+                    # Log found channel for debugging
+                    logger.info(f"Found existing channel: {disk_space_channel.name}")
+                    # Edit the existing channel
+                    await disk_space_channel.edit(name=f"HDD: {space}")
                 else:
+                    # Log that no channel was found and a new one will be created
+                    logger.info("No existing HDD: channel found, creating a new one.")
+                    # Define the permission overwrite for @everyone role to disallow connect
+                    overwrites = {
+                        guild.default_role: discord.PermissionOverwrite(connect=False)
+                    }
                     # Create a new voice channel with the specified permissions
                     await guild.create_voice_channel(name=f"HDD: {space}", overwrites=overwrites)
             else:
