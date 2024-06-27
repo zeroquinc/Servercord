@@ -64,11 +64,6 @@ class TasksCog(commands.Cog):
             seconds = TimeCalculator.seconds_until_next_day()
             logger.info(f'Trakt favorites task will start in {str(timedelta(seconds=seconds))}')
             await asyncio.sleep(seconds)
-            
-    @update_disk_space_channel.before_loop
-    async def before_update_disk_space_channel(self):
-        logger.info('Waiting for bot to be ready...')
-        await self.bot.wait_until_ready()
 
 async def setup(bot):
     logger.info('Cogs have been loaded')
