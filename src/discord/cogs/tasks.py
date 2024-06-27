@@ -43,7 +43,8 @@ class TasksCog(commands.Cog):
             guild = await self.bot.fetch_guild(guild_id)
     
             if guild is not None:
-                disk_space_channel = next((channel for channel in guild.channels if "HDD:" in channel.name), None)
+                # Look for a channel that starts with "HDD:"
+                disk_space_channel = next((channel for channel in guild.channels if channel.name.startswith("HDD:")), None)
     
                 # Define the permission overwrite for @everyone role to disallow connect
                 overwrites = {
