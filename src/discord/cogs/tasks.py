@@ -5,7 +5,7 @@ from datetime import timedelta
 from utils.custom_logger import logger
 from utils.datetime import TimeCalculator
 from src.trakt.functions import process_ratings, process_favorites
-from config.globals import TRAKT_CHANNEL, TRAKT_USERNAME, ENABLE_DELAY
+from config.globals import TRAKT_CHANNEL, TRAKT_USERNAME, ENABLE_DELAY, DISCORD_SERVER_ID
 
 class TasksCog(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -30,6 +30,26 @@ class TasksCog(commands.Cog):
             await process_favorites(favorites_channel, TRAKT_USERNAME)
         except Exception as e:
             logger.error(f'Error processing recent Trakt ratings: {e}')
+            
+    @tasks.loop(hours=12)
+    async def update_disk_space_channel(self):
+        await self.bot.wait_until_ready()
+        space = self.get_disk_space()
+        guild_id = DISCORD_SERVER_ID
+        guild = self.bot.get_guild(guild_id)
+
+        if guild is not None:
+            # Check for any channel with "Disk Space" in its name
+            disk_space_channel = next((channel for channel in guild.channels if "Disk Space" in channel.name), None)
+
+            if disk_space_channel is not None:
+                # If a "Disk Space" channel exists, update its name
+                await disk_space_channel.edit(name=space)
+            else:
+                # If no "Disk Space" channel exists, create a new voice channel
+                await guild.create_voice_channel(name=space)
+        else:
+            print(f"Guild with ID {guild_id} not found.")
 
     @trakt_ratings.before_loop
     async def before_trakt_ratings(self):
@@ -44,6 +64,11 @@ class TasksCog(commands.Cog):
             seconds = TimeCalculator.seconds_until_next_day()
             logger.info(f'Trakt favorites task will start in {str(timedelta(seconds=seconds))}')
             await asyncio.sleep(seconds)
+            
+    @update_disk_space_channel.before_loop
+    async def before_update_disk_space_channel(self):
+        logger.info('Waiting for bot to be ready...')
+        await self.bot.wait_until_ready()
 
 async def setup(bot):
     logger.info('Cogs have been loaded')
