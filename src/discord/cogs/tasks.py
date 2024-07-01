@@ -56,7 +56,7 @@ class TasksCog(commands.Cog):
 
                 if disk_space_channel is not None:
                     logger.info(f"Found existing channel: {disk_space_channel.name}")
-                    await disk_space_channel.edit(name=f"HDD: {space}")
+                    await disk_space_channel.edit(name=f"{space}")
                 else:
                     logger.info("No existing HDD: channel found, creating a new one.")
                     overwrites = {
