@@ -62,7 +62,7 @@ class TasksCog(commands.Cog):
                     overwrites = {
                         guild.default_role: discord.PermissionOverwrite(connect=False)
                     }
-                    await guild.create_voice_channel(name=f"HDD: {space}", overwrites=overwrites)
+                    await guild.create_voice_channel(name=f"{space}", overwrites=overwrites)
             else:
                 logger.info(f"Guild with ID {guild_id} not found.")
         except Exception as e:
