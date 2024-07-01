@@ -52,7 +52,7 @@ class TasksCog(commands.Cog):
                 logger.debug(f"All channels: {[channel.name for channel in channels]}")
 
                 # Look for a channel that starts with "HDD:"
-                disk_space_channel = next((channel for channel in channels if channel.name.startswith("HDD:")), None)
+                disk_space_channel = next((channel for channel in channels if channel.name.startswith("Free:")), None)
 
                 if disk_space_channel is not None:
                     logger.info(f"Found existing channel: {disk_space_channel.name}")
