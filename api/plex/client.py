@@ -59,7 +59,7 @@ class PlexWebhookHandler:
         return embed_creators.get(self.webhook_type)()
 
     def embed_for_event(self):
-        title = f"{self.title} ({self.year})" if self.media_type == "Movie" else f"{self.title} (S{self.season_num00}E{self.episode_num00})"
+        title = f"{self.title} ({self.year})" if self.media_type == "movie" else f"{self.title} (S{self.season_num00}E{self.episode_num00})"
         embed = EmbedBuilder(title=title, url=self.plex_url, color=0xe5a00d)
         if self.poster_url:
             embed.set_thumbnail(url=self.poster_url)
