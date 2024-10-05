@@ -28,6 +28,7 @@ RADARR_CHANNEL = int(os.getenv("RADARR_CHANNEL"))
 RADARR_ICON = "https://i.imgur.com/6U4aXO0.png"
 SONARR_CHANNEL = int(os.getenv("SONARR_CHANNEL"))
 SONARR_ICON = "https://i.imgur.com/dZSIKZE.png"
+UPDATE_CHANNEL = int(os.getenv("UPDATE_CHANNEL"))
 
 # Delay
 ENABLE_DELAY = os.getenv("ENABLE_DELAY") == "True"

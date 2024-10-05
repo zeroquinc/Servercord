@@ -3,7 +3,7 @@ from utils.custom_logger import logger
 
 from api.tmdb.client import TMDb
 from src.radarr.functions import process_webhook
-from config.globals import RADARR_CHANNEL
+from config.globals import RADARR_CHANNEL, UPDATE_CHANNEL
 
 class RadarrWebhookHandler:
     def __init__(self, payload, discord_bot):
@@ -34,5 +34,11 @@ class RadarrWebhookHandler:
     async def handle_webhook(self):
         logger.info(f"Processing Radarr webhook payload for event type: {self.event_type}")
         logger.debug(f"Payload: {json.dumps(self.payload, indent=4)}")
-        channel = self.discord_bot.bot.get_channel(RADARR_CHANNEL)
+
+        # Check if the event is "ApplicationUpdate" and set the channel accordingly
+        if self.event_type == 'ApplicationUpdate':
+            channel = self.discord_bot.bot.get_channel(UPDATE_CHANNEL)  # Send to the update channel
+        else:
+            channel = self.discord_bot.bot.get_channel(RADARR_CHANNEL)  # Send to the default Radarr channel
+
         await process_webhook(self, channel)
