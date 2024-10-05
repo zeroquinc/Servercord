@@ -74,7 +74,7 @@ class PlexWebhookHandler:
         if self.webhook_type == 'newcontent_season':
             embed.add_field(name="Episodes", value=f"{self.episode_count}", inline=True)
         if self.webhook_type == 'newcontent_movie':
-            embed.set_footer(text={self.genres})
+            embed.set_footer(text=f"{self.genres}")
         embed.set_author(name=f"New {self.media_type.capitalize()} added to Plex", icon_url=PLEX_ICON)
         return embed
 
