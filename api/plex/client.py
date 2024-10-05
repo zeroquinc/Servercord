@@ -73,6 +73,8 @@ class PlexWebhookHandler:
             embed.set_thumbnail(url=self.poster_url)
         if self.webhook_type == 'newcontent_season':
             embed.add_field(name="Episodes", value=f"{self.episode_count}", inline=True)
+        if self.webhook_type == 'newcontent_movie':
+            embed.set_footer(text={self.genres})
         embed.set_author(name=f"New {self.media_type.capitalize()} added to Plex", icon_url=PLEX_ICON)
         return embed
 
@@ -88,7 +90,7 @@ class PlexWebhookHandler:
         descriptions = {
             'newcontent_episode': f"||{self.summary}||" if self.summary else '',
             'newcontent_season': f"||{self.summary}||" if self.summary else '',
-            'newcontent_movie': f"||{self.summary}||\n{self.genres}" if self.summary else {self.genres} # We put || here because of how Discord handles spoilers
+            'newcontent_movie': f"||{self.summary}||" if self.summary else '' # We put || here because of how Discord handles spoilers
         }
         return descriptions.get(self.webhook_type, '')
 
