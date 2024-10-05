@@ -86,9 +86,9 @@ class PlexWebhookHandler:
 
     def get_description(self):
         descriptions = {
-            'newcontent_episode': '',
-            'newcontent_season': '',
-            'newcontent_movie': self.genres,
+            'newcontent_episode': f"||{self.summary}||" if self.summary else '',
+            'newcontent_season': f"||{self.summary}||" if self.summary else '',
+            'newcontent_movie': f"||{self.summary}||\n{self.genres}" if self.summary else {self.genres} # We put || here because of how Discord handles spoilers
         }
         return descriptions.get(self.webhook_type, '')
 
