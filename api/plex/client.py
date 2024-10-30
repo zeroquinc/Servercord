@@ -16,7 +16,7 @@ class PlexWebhookHandler:
         fields = [
             'media_type', 'year', 'title', 'summary', 'quality', 'air_date', 'genres',
             'release_date', 'season_num00', 'episode_num00', 'episode_count', 'poster_url',
-            'imdb_url', 'tvdb_url', 'trakt_url', 'plex_url', 'tmdb_url', 'tmdb_id', 'critic_rating', 'audience_rating',
+            'imdb_url', 'tvdb_url', 'trakt_url', 'plex_url', 'tmdb_url', 'tmdb_id_plex', 'critic_rating', 'audience_rating',
             'rating', 'username', 'platform', 'player', 'product', 'video_decision',
             'remaining_time', 'duration_time', 'server_name', 'webhook_type'
         ]
@@ -99,7 +99,7 @@ class PlexWebhookHandler:
         elif self.webhook_type == 'newcontent_season':
             embed.add_field(name="Episodes", value=f"{self.episode_count}", inline=False)
         elif self.webhook_type == 'newcontent_movie':
-            embed.add_field(name="Links", value=f"[IMDb]({self.imdb_url}) • [TMDB]({self.tmdb_url}) • [Trakt](https://trakt.tv/search/imdb?query={self.tmdb_id})")
+            embed.add_field(name="Links", value=f"[IMDb]({self.imdb_url}) • [TMDB]({self.tmdb_url}) • [Trakt](https://trakt.tv/search/imdb?query={self.tmdb_id_plex})")
             embed.set_footer(text=f"{self.genres} • {self.format_duration_time()}")
         embed.set_author(name=f"New {self.media_type.capitalize()} added to Plex", icon_url=PLEX_ICON)
         return embed
