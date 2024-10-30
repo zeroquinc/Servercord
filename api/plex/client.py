@@ -33,8 +33,10 @@ class PlexWebhookHandler:
     def format_duration_time(self):
         if self.duration_time and self.duration_time != 'N/A':
             try:
-                hours, minutes = self.duration_time.split(":")
-                return f"{int(hours):02}h {int(minutes):02}m"
+                hours, minutes = map(int, self.duration_time.split(":"))  # Convert to integers to handle non-padded hours/minutes
+                if hours == 0:
+                    return f"{minutes}m"  # Only show minutes if hours are 0
+                return f"{hours}h {minutes}m"
             except ValueError:
                 logger.error(f"Invalid duration_time format: {self.duration_time}")
                 return self.duration_time
