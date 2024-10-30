@@ -1,5 +1,4 @@
 import json
-
 from config.globals import PLEX_ICON, PLEX_PLAYING, PLEX_CONTENT
 from src.discord.embed import EmbedBuilder
 from utils.custom_logger import logger
@@ -30,6 +29,16 @@ class PlexWebhookHandler:
             elif field in server_info:
                 field_value = server_info.get(field)
             setattr(self, field, field_value)
+
+    def format_duration_time(self):
+        if self.duration_time and self.duration_time != 'N/A':
+            try:
+                hours, minutes = self.duration_time.split(":")
+                return f"{int(hours):02}h {int(minutes):02}m"
+            except ValueError:
+                logger.error(f"Invalid duration_time format: {self.duration_time}")
+                return self.duration_time
+        return 'N/A'
 
     async def handle_webhook(self):
         logger.info(f"Processing Plex webhook payload for event type: {self.webhook_type}")
@@ -89,7 +98,7 @@ class PlexWebhookHandler:
             embed.add_field(name="Episodes", value=f"{self.episode_count}", inline=False)
         elif self.webhook_type == 'newcontent_movie':
             embed.add_field(name="Links", value=f"[IMDb]({self.imdb_url}) • [Trakt]({self.trakt_url})")
-            embed.set_footer(text=f"{self.genres} • {self.duration_time}")
+            embed.set_footer(text=f"{self.genres} • {self.format_duration_time()}")
         embed.set_author(name=f"New {self.media_type.capitalize()} added to Plex", icon_url=PLEX_ICON)
         return embed
 
