@@ -39,41 +39,48 @@ class PlexWebhookHandler:
     def determine_channel_id(self):
         channel_ids = {
             'nowplaying': PLEX_PLAYING,
-            #'nowresuming': PLEX_PLAYING,
-            #'finished': PLEX_PLAYING,
             'newcontent_episode': PLEX_CONTENT,
             'newcontent_season': PLEX_CONTENT,
             'newcontent_movie': PLEX_CONTENT,
         }
         return channel_ids.get(self.webhook_type, 'default_channel_id')
 
+    def get_embed_color(self):
+        color_mapping = {
+            'nowplaying': 0xe5a00d,           # Orange color for now playing
+            'newcontent_episode': 0x1e90ff,   # Blue color for new episode content
+            'newcontent_season': 0x32cd32,    # Lime green color for new season content
+            'newcontent_movie': 0xff6347      # Tomato red color for new movie content
+        }
+        return color_mapping.get(self.webhook_type, 0x000000)  # Default to black if not found
+
     def generate_embed(self):
+        embed_color = self.get_embed_color()  # Get color based on webhook type
+
         embed_creators = {
-            'nowplaying': self.embed_for_event,
-            #'nowresuming': self.embed_for_event,
-            #'finished': self.embed_for_event,
+            'nowplaying': self.embed_for_playing,
             'newcontent_episode': self.embed_for_newcontent,
             'newcontent_season': self.embed_for_newcontent,
             'newcontent_movie': self.embed_for_newcontent,
         }
-        return embed_creators.get(self.webhook_type)()
+        return embed_creators.get(self.webhook_type)(embed_color)
 
-    def embed_for_event(self):
+    def embed_for_playing(self, color):
         title = f"{self.title} ({self.year})" if self.media_type == "movie" else f"{self.title} (S{self.season_num00}E{self.episode_num00})"
-        embed = EmbedBuilder(title=title, url=self.plex_url, color=0xe5a00d)
+        embed = EmbedBuilder(title=title, url=self.plex_url, color=color)
         if self.poster_url:
             embed.set_thumbnail(url=self.poster_url)
         embed.set_author(name="Now Playing on Plex", icon_url=PLEX_ICON)
         embed.set_footer(text=f"{self.username.capitalize()} • {self.video_decision.title()} • {self.product}")
         return embed
 
-    def embed_for_newcontent(self):
-        embed = EmbedBuilder(title=self.get_newcontent_title(), url=self.plex_url, color=0xe5a00d)
+    def embed_for_newcontent(self, color):
+        embed = EmbedBuilder(title=self.get_newcontent_title(), url=self.plex_url, color=color)
         if self.summary:
             if self.webhook_type in ['newcontent_episode', 'newcontent_season']:
-                embed.add_field(name="Plot", value=f"||{self.summary}||", inline=False)  # Spoilers for episode/season
+                embed.add_field(name="Plot", value=f"||{self.summary}||", inline=False)
             else:
-                embed.add_field(name="Plot", value=self.summary, inline=False)  # No spoilers for movies
+                embed.add_field(name="Plot", value=self.summary, inline=False)
         if self.poster_url:
             embed.set_thumbnail(url=self.poster_url)
         if self.webhook_type == 'newcontent_episode':
@@ -81,7 +88,8 @@ class PlexWebhookHandler:
         elif self.webhook_type == 'newcontent_season':
             embed.add_field(name="Episodes", value=f"{self.episode_count}", inline=False)
         elif self.webhook_type == 'newcontent_movie':
-            embed.set_footer(text=f"{self.genres}")
+            embed.add_field(name="Links", value=f"[IMDb]({self.imdb_url}) • [Trakt]({self.trakt_url})")
+            embed.set_footer(text=f"{self.genres} • {self.duration_time}")
         embed.set_author(name=f"New {self.media_type.capitalize()} added to Plex", icon_url=PLEX_ICON)
         return embed
 
