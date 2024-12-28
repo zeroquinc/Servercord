@@ -114,5 +114,5 @@ class TasksCog(commands.Cog):
             await asyncio.sleep(sleep_duration)  # Sleep until the next run time
 
 async def setup(bot):
-    logger.info('Cogs have been loaded')
+    logger.info('Tasks cogs have been loaded')
     await bot.add_cog(TasksCog(bot))

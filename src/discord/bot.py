@@ -39,6 +39,8 @@ class DiscordBot:
         await self.bot.load_extension('src.discord.cogs.tasks')
         
         # Load commands here
+        logger.info('Loading Trakt cog')
+        await self.bot.load_extension('src.discord.cogs.trakt')
 
     ## Post an single embed to a channel
     async def dispatch_embed(self, channel_id, embed):
