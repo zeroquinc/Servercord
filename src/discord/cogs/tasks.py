@@ -96,22 +96,20 @@ class TasksCog(commands.Cog):
     @weekly_global_embed.before_loop
     async def before_weekly_task(self):
         if ENABLE_DELAY:
-            await self.bot.wait_until_ready()  # Wait until the bot is ready
+            await self.bot.wait_until_ready()
             now = datetime.now()
+            
             # Calculate the next Wednesday
-            next_wednesday = now + timedelta((2-now.weekday()) % 7)  # 2 is Wednesday
-            # Calculate the time until the next Wednesday at 12 PM
+            next_wednesday = now + timedelta((2 - now.weekday() + (7 if now.weekday() > 2 or (now.weekday() == 2 and now.hour >= 12) else 0)) % 7)
             next_run_time = datetime.combine(next_wednesday, datetime.min.time()) + timedelta(hours=12)
-            if now.hour >= 12:  # If it's past 12 PM, schedule for next week
-                next_run_time += timedelta(days=7)
+            
             # Calculate the sleep duration
             sleep_duration = (next_run_time - now).total_seconds()
-            # Convert sleep_duration into hours, minutes, and seconds
             hours, remainder = divmod(int(sleep_duration), 3600)
             minutes, seconds = divmod(remainder, 60)
-            # Format the logging message to display time in HH:MM:SS format
+            
             logger.info(f'Weekly global Trakt task will start in {hours:02}:{minutes:02}:{seconds:02}')
-            await asyncio.sleep(sleep_duration)  # Sleep until the next run time
+            await asyncio.sleep(sleep_duration)
 
 async def setup(bot):
     logger.info('Tasks cogs have been loaded')
