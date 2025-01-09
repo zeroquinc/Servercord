@@ -99,8 +99,11 @@ class PlexWebhookHandler:
         elif self.webhook_type == 'newcontent_season':
             embed.add_field(name="Episodes", value=f"{self.episode_count}", inline=False)
         elif self.webhook_type == 'newcontent_movie':
-            embed.add_field(name="Links", value=f"[IMDb]({self.imdb_url}) • [TMDB]({self.tmdb_url}) • [Trakt](https://trakt.tv/search/imdb?query={self.tmdb_id_plex})")
-            embed.set_footer(text=f"{self.genres} • {self.format_duration_time()}")
+            links = self.build_links()
+            if links:
+                embed.add_field(name="Links", value=links, inline=False)
+            footer_text = self.build_footer()
+            embed.set_footer(text=footer_text)
         embed.set_author(name=f"New {self.media_type.capitalize()} added to Plex", icon_url=PLEX_ICON)
         return embed
 
@@ -111,6 +114,23 @@ class PlexWebhookHandler:
             'newcontent_movie': f"{self.title} ({self.year})"
         }
         return titles.get(self.webhook_type, self.title)
+    
+    def build_links(self):
+        links = []
+        if self.imdb_url and self.imdb_url.lower() != "n/a":
+            links.append(f"[IMDb]({self.imdb_url})")
+        if self.tmdb_url and self.tmdb_url.lower() != "n/a":
+            links.append(f"[TMDb]({self.tmdb_url})")
+        if self.tmdb_id_plex:
+            links.append(f"[Trakt](https://trakt.tv/search/imdb?query={self.tmdb_id_plex})")
+        return " • ".join(links)
+
+    def build_footer(self):
+        footer_parts = []
+        if self.genres and self.genres.lower() != "n/a":
+            footer_parts.append(self.genres)
+        footer_parts.append(self.format_duration_time())
+        return " • ".join(footer_parts)
 
     async def dispatch_embed(self):
         embed = self.generate_embed()
