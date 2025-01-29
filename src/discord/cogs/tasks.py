@@ -100,8 +100,10 @@ class TasksCog(commands.Cog):
             now = datetime.now()
             
             # Calculate the next Wednesday
-            next_wednesday = now + timedelta((2 - now.weekday() + (7 if now.weekday() > 2 or (now.weekday() == 2 and now.hour >= 12) else -7)) % 7)
+            next_wednesday = now + timedelta((2 - now.weekday() + 7) % 7)
             next_run_time = datetime.combine(next_wednesday, datetime.min.time()) + timedelta(hours=12)
+            if next_run_time <= now:
+                next_run_time += timedelta(days=7)
             
             # Calculate the sleep duration
             sleep_duration = (next_run_time - now).total_seconds()
