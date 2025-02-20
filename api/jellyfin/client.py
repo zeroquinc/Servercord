@@ -157,7 +157,7 @@ class JellyfinWebhookHandler:
         embed_color = self.get_embed_color()
         return {
             'Play': self.embed_for_playing,
-            'ItemAdded': self.embed_for_newcontent
+            'ItemUpdated': self.embed_for_newcontent
         }.get(self.details.get('event'), lambda _: None)(embed_color)
 
     def embed_for_playing(self, color):
