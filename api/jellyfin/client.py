@@ -82,6 +82,14 @@ class JellyfinWebhookHandler:
             "external_urls": series.get("ExternalUrls", []),
         }
 
+    def get_poster_url(self, media, series, media_type):
+        if media_type == "Episode":
+            tvdb_id = series.get("ProviderIds", {}).get("Tvdb")
+            return TMDb.show_poster_path(tvdb_id) if tvdb_id else None
+        else:
+            tmdb_id = media.get("ProviderIds", {}).get("Tmdb")
+            return TMDb.movie_poster_path(tmdb_id) if tmdb_id else None
+
     def format_media_title(self, media):
         if media['type'] == "Movie":
             return f"{media['name']} ({media['production_year']})"
