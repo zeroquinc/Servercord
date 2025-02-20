@@ -239,14 +239,6 @@ class JellyfinWebhookHandler:
         embed.set_author(name=f"New {media['type']} added to Jellyfin", icon_url=JELLYFIN_ICON)
         return embed
 
-    def get_newcontent_title(self, media):
-        titles = {
-            'Episode': f"{media['name']} (S{int(media.get('season', 0)):02}E{int(media.get('episode', 0)):02})",
-            'Season': f"{media['name']}",
-            'Movie': f"{media['name']} ({media['production_year']})"
-        }
-        return titles.get(media['type'], media['name'])
-
     def build_links(self):
         media = self.details['media']
         links = []
