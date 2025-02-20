@@ -82,83 +82,6 @@ class JellyfinWebhookHandler:
             "external_urls": series.get("ExternalUrls", []),
         }
 
-    def extract_user_details(self, user):
-        return {
-            "username": user.get("Name", "Unknown User"),
-            "user_id": user.get("Id", "Unknown ID"),
-            "is_admin": user.get("Policy", {}).get("IsAdministrator", False),
-            "last_login": user.get("LastLoginDate", "Unknown"),
-        }
-
-    def extract_session_details(self, session):
-        play_method = session.get("PlayState", {}).get("PlayMethod", "Unknown")
-        if play_method == "DirectStream":
-            play_method = "Direct Play"
-        return {
-            "device_name": session.get("DeviceName", "Unknown Device"),
-            "client": session.get("Client", "Unknown Client"),
-            "remote_ip": session.get("RemoteEndPoint", "Unknown IP"),
-            "is_paused": session.get("PlayState", {}).get("IsPaused", False),
-            "play_method": play_method,
-        }
-
-    def extract_server_details(self, server):
-        return {
-            "server_name": server.get("Name", "Unknown Server"),
-            "server_version": server.get("Version", "Unknown Version"),
-        }
-
-    def get_poster_url(self, media, series, media_type):
-        if media_type == "Episode":
-            tvdb_id = series.get("ProviderIds", {}).get("Tvdb")
-            return TMDb.show_poster_path(tvdb_id) if tvdb_id else None
-        else:
-            tmdb_id = media.get("ProviderIds", {}).get("Tmdb")
-            return TMDb.movie_poster_path(tmdb_id) if tmdb_id else None
-
-    async def handle_webhook(self):
-        logger.info(f"Processing Jellyfin webhook payload for event type: {self.details.get('event', 'Unknown Event')}")
-        logger.debug(f"Payload: {json.dumps(self.payload, indent=4)}")
-        logger.debug(f"Details: {json.dumps(self.details, indent=4)}")
-        await self.dispatch_embed()  
-
-    def determine_channel_id(self):
-        channel_ids = {
-            'Play': JELLYFIN_PLAYING,
-            'ItemAdded': JELLYFIN_CONTENT,
-        }
-        return channel_ids.get(self.details.get('event'), 'default_channel_id')
-
-    def get_embed_color(self):
-        color_mapping = {
-            'Play': 0x6c76cc,
-            'ItemAdded': 0x1e90ff,
-        }
-        return color_mapping.get(self.details.get('event'), 0x000000)
-
-    def generate_embed(self):  
-        embed_color = self.get_embed_color()
-        embed_creators = {
-            'Play': self.embed_for_playing
-        }
-        creator = embed_creators.get(self.details.get('event'))
-        return creator(embed_color) if creator else None
-
-    def embed_for_playing(self, color):
-        media = self.details['media']
-        title = self.format_media_title(media)
-
-        imdb_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'IMDb'), None)
-        embed = EmbedBuilder(title=title, url=imdb_url, color=color)
-
-        if media.get('poster_url'):
-            embed.set_thumbnail(url=media['poster_url'])
-
-        embed.set_author(name="Now Playing on Jellyfin", icon_url=JELLYFIN_ICON)
-        embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['play_method']} • {self.details['session']['client']}")
-
-        return embed
-
     def format_media_title(self, media):
         if media['type'] == "Movie":
             return f"{media['name']} ({media['production_year']})"
@@ -168,6 +91,104 @@ class JellyfinWebhookHandler:
             return f"{media['series']['name']} - {media['name']} ({season}{episode})"
         else:
             return f"{media['name']} (Unknown Type)"
+
+    async def handle_webhook(self):
+        logger.info(f"Processing Jellyfin webhook payload for event type: {self.details.get('event', 'Unknown Event')}")
+        await self.dispatch_embed()  
+
+    def determine_channel_id(self):
+        return {
+            'Play': JELLYFIN_PLAYING,
+            'ItemAdded': JELLYFIN_CONTENT,
+        }.get(self.details.get('event'), 'default_channel_id')
+
+    def get_embed_color(self):
+        return {
+            'Play': 0x6c76cc,
+            'ItemAdded': 0x1e90ff,
+        }.get(self.details.get('event'), 0x000000)
+
+    def generate_embed(self):  
+        embed_color = self.get_embed_color()
+        return {
+            'Play': self.embed_for_playing,
+            'ItemAdded': self.embed_for_newcontent
+        }.get(self.details.get('event'), lambda _: None)(embed_color)
+
+    def embed_for_playing(self, color):
+        media = self.details['media']
+        embed = EmbedBuilder(title=self.format_media_title(media), color=color)
+        if media.get('poster_url'):
+            embed.set_thumbnail(url=media['poster_url'])
+        embed.set_author(name="Now Playing on Jellyfin", icon_url=JELLYFIN_ICON)
+        return embed
+
+    def embed_for_newcontent(self, color):
+        media = self.details['media']
+        title = self.get_newcontent_title(media)
+        embed = EmbedBuilder(title=title, color=color)
+
+        imdb_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'IMDb'), None)
+        if imdb_url:
+            embed.set_title(title, url=imdb_url)
+        else:
+            embed.set_title(title)
+
+        # Format plot with spoilers if it's an Episode or Series
+        plot = media.get("overview", "No overview available.")
+        if media["type"] in ["Episode", "Series"]:
+            plot = f"||{plot}||"  # Wrap in Discord spoiler tags
+
+        embed.add_field(name="Plot", value=plot, inline=False)
+
+        # Build and add footer (Genres for Movies, PremiereDate for Episodes)
+        footer_text = self.build_footer(media)
+        if footer_text:
+            embed.set_footer(text=footer_text)
+
+        links = self.build_links()
+        if links:
+            embed.add_field(name="Links", value=links, inline=False)
+
+        if media.get("poster_url"):
+            embed.set_thumbnail(url=media["poster_url"])
+        return embed
+
+    def get_newcontent_title(self, media):
+        titles = {
+            'Episode': f"{media['name']} (S{int(media.get('season', 0)):02}E{int(media.get('episode', 0)):02})",
+            'Season': f"{media['name']}",
+            'Movie': f"{media['name']} ({media['production_year']})"
+        }
+        return titles.get(media['type'], media['name'])
+
+    def build_links(self):
+        media = self.details['media']
+        links = []
+        for url in media.get("external_urls", []):
+            if url['Name'] in ['IMDb', 'TMDb', 'Trakt']:
+                links.append(f"[{url['Name']}]({url['Url']})")
+        return " • ".join(links)
+    
+    def build_footer(self, media):
+        footer_parts = []
+        
+        if media["type"] == "Movie":
+            genres = ", ".join(media.get("genres", [])) if media.get("genres") else "N/A"
+            if genres.lower() != "n/a":
+                footer_parts.append(genres)
+
+        # Add PremiereDate for Episodes
+        if media["type"] == "Episode" and media.get("premiere_date"):
+            premiere_date = self.format_premiere_date(media["premiere_date"])
+            footer_parts.append(f"Premiered: {premiere_date}")
+
+        # Add runtime if available
+        if media.get("runtime_seconds"):
+            duration = f"{int(media['runtime_seconds'] // 60)} min"
+            footer_parts.append(duration)
+
+        return " • ".join(footer_parts)
 
     async def dispatch_embed(self):
         embed = self.generate_embed()
