@@ -277,9 +277,15 @@ class JellyfinWebhookHandler:
     
     def format_premiere_date(self, date_str):
         """Formats a premiere date into DD/MM/YYYY format."""
+        if not date_str:
+            return "Unknown Date"
+        
         try:
-            return datetime.fromisoformat(date_str.rstrip("Z")).strftime("%d/%m/%Y")
-        except ValueError:
+            # Remove trailing 'Z' and parse
+            date_obj = datetime.strptime(date_str.split("T")[0], "%Y-%m-%d")
+            return date_obj.strftime("%d/%m/%Y")
+        except ValueError as e:
+            print(f"Error parsing date: {e}")
             return "Unknown Date"
 
     async def dispatch_embed(self):
