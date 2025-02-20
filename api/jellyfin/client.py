@@ -258,20 +258,20 @@ class JellyfinWebhookHandler:
     def build_footer(self, media):
         footer_parts = []
         
-        if media["type"] == "Movie":
-            genres = ", ".join(media.get("genres", [])) if media.get("genres") else "N/A"
+        if media.get("type") == "Movie":
+            genres = ", ".join(media.get("genres", [])) or "N/A"
             if genres.lower() != "n/a":
                 footer_parts.append(genres)
+            
+            # Add runtime if available
+            if media.get("runtime_seconds"):
+                duration = f"{int(media['runtime_seconds'] // 60)} min"
+                footer_parts.append(duration)
 
         # Add PremiereDate for Episodes
         if media["type"] == "Episode" and media.get("premiere_date"):
             premiere_date = self.format_premiere_date(media["premiere_date"])
-            footer_parts.append(f"Air date: {premiere_date}")
-
-        # Add runtime if available
-        if media.get("runtime_seconds"):
-            duration = f"{int(media['runtime_seconds'] // 60)} min"
-            footer_parts.append(duration)
+            footer_parts.append(f"Aired on {premiere_date}")
 
         return " • ".join(footer_parts)
     
