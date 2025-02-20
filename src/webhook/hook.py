@@ -1,29 +1,45 @@
 from aiohttp import web
-
 from utils.custom_logger import logger
 from api.sonarr.client import SonarrWebhookHandler
 from api.radarr.client import RadarrWebhookHandler
 from api.plex.client import PlexWebhookHandler
 from api.jellyfin.client import JellyfinWebhookHandler
+from config.config import WEBHOOKS_ENABLED
 
 class HandleWebHook:
-    # Initialize the webhook receiver
+    # Define handlers and routes inside the class
+    WEBHOOKS = {
+        "sonarr": {"handler": SonarrWebhookHandler, "route": "/sonarr_webhook"},
+        "radarr": {"handler": RadarrWebhookHandler, "route": "/radarr_webhook"},
+        "plex": {"handler": PlexWebhookHandler, "route": "/plex_webhook"},
+        "jellyfin": {"handler": JellyfinWebhookHandler, "route": "/jellyfin_webhook"},
+    }
+
     def __init__(self, discord_bot, host="0.0.0.0", port=2024):
         self.discord_bot = discord_bot
         self.host = host
         self.port = port
         self.app = web.Application()
-        self.app.router.add_post('/sonarr_webhook', self.handle_webhook(SonarrWebhookHandler))
-        self.app.router.add_post('/radarr_webhook', self.handle_webhook(RadarrWebhookHandler))
-        self.app.router.add_post('/plex_webhook', self.handle_webhook(PlexWebhookHandler))
-        self.app.router.add_post('/jellyfin_webhook', self.handle_webhook(JellyfinWebhookHandler))
+
+        disabled_webhooks = []  # Track disabled webhooks
+
+        # Register only enabled webhooks
+        for name, config in self.WEBHOOKS.items():
+            if WEBHOOKS_ENABLED.get(name, False):  # Check if enabled in config
+                self.app.router.add_post(config["route"], self.handle_webhook(config["handler"]))
+            else:
+                disabled_webhooks.append(name)
+
+        # Log disabled webhooks
+        if disabled_webhooks:
+            logger.warning(f"Disabled webhooks: {', '.join(disabled_webhooks)}")
+
         self.uvicorn_params = {
             "host": self.host,
             "port": self.port,
             "access_log": False,
         }
 
-    # Handle webhook
     def handle_webhook(self, Handler):
         async def handler(request):
             try:
@@ -33,11 +49,9 @@ class HandleWebHook:
             except Exception as e:
                 logger.error(f"Error handling webhook: {e}")
                 return web.Response(text='Error', status=500)
-
             return web.Response(text='OK')
         return handler
 
-    # Start the webhook receiver
     async def start(self):
         try:
             runner = web.AppRunner(self.app)
@@ -48,6 +62,5 @@ class HandleWebHook:
         except Exception as e:
             logger.error(f"Error starting the server: {e}")
 
-    # Cleanup the webhook receiver
     async def cleanup(self):
         await self.app.cleanup()
