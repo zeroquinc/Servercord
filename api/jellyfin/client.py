@@ -178,14 +178,16 @@ class JellyfinWebhookHandler:
             'Play': JELLYFIN_PLAYING,
             'Resume': JELLYFIN_PLAYING,
             'Pause': JELLYFIN_PLAYING,
+            'MarkPlayed': JELLYFIN_PLAYING,
             'ItemUpdated': JELLYFIN_CONTENT
         }.get(self.details.get('event'), 'default_channel_id')
 
     def get_embed_color(self):
         return {
             'Play': 0x6c76cc,
-            'Resume': 0xc034eb,
+            'Resume': 0xac10c4,
             'Pause': 0x6e0918,
+            'MarkPlayed': 0x054017,
             'ItemUpdated': 0x1e90ff,
         }.get(self.details.get('event'), 0x000000)
 
@@ -195,7 +197,7 @@ class JellyfinWebhookHandler:
             'Play': self.embed_for_playing,
             'Resume': self.embed_for_resuming,
             'Pause': self.embed_for_pausing,
-            'MarkPlayed': self.embed_for_played,
+            'MarkPlayed': self.embed_for_markplayed,
             'ItemUpdated': self.embed_for_newcontent
         }.get(self.details.get('event'), lambda _: None)(embed_color)
 
@@ -253,7 +255,7 @@ class JellyfinWebhookHandler:
 
         return embed
     
-    def embed_for_played(self, color):
+    def embed_for_markplayed(self, color):
         media = self.details['media']
         title = self.format_media_title(media)
 
