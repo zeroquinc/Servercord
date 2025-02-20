@@ -20,6 +20,8 @@ class JellyfinWebhookHandler:
             media = data["Item"]
             series = data["Series"]
             media_type = media.get("Type", "Unknown")
+            if media_type == "Person": # Ignore Person type media
+                return {}
 
             media_details = self.extract_media_details(media, series, media_type)
             user_details = self.extract_user_details(data["User"])
