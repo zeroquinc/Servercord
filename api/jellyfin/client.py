@@ -160,7 +160,7 @@ class JellyfinWebhookHandler:
         elif media['type'] == "Episode":
             season = f"S{int(media.get('season', 0)):02}"
             episode = f"E{int(media.get('episode', 0)):02}"
-            return f"{media['series']['name']} ({season}{episode})"
+            return f"{media['series']['name']} - {media['name']} ({season}{episode})"
         else:
             return f"{media['name']} (Unknown Type)"
 
