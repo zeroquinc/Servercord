@@ -15,10 +15,10 @@ async def process_favorites(favorites_channel, username):
 
     async def process_favorite(favorite):
         author_formats = {
-            'show': "A show has been favorited on Trakt",
-            'season': "A season has been favorited on Trakt",
-            'episode': "An episode has been favorited on Trakt",
-            'movie': "A movie has been favorited on Trakt"
+            'show': "Trakt: A show has been favorited",
+            'season': "Trakt: A season has been favorited",
+            'episode': "Trakt: An episode has been favorited",
+            'movie': "Trakt: A movie has been favorited"
         }
         title_formats = {
             'show': f"{favorite.show_title}",

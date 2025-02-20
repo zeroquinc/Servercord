@@ -195,6 +195,7 @@ class JellyfinWebhookHandler:
             'Play': self.embed_for_playing,
             'Resume': self.embed_for_resuming,
             'Pause': self.embed_for_pausing,
+            'MarkPlayed': self.embed_for_played,
             'ItemUpdated': self.embed_for_newcontent
         }.get(self.details.get('event'), lambda _: None)(embed_color)
 
@@ -208,7 +209,7 @@ class JellyfinWebhookHandler:
         if media.get('poster_url'):
             embed.set_thumbnail(url=media['poster_url'])
 
-        embed.set_author(name="Playing on Jellyfin", icon_url=JELLYFIN_ICON)
+        embed.set_author(name="Jellyfin: Media Playing", icon_url=JELLYFIN_ICON)
         embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['play_method']} • {self.details['session']['client']}")
 
         return embed
@@ -223,7 +224,7 @@ class JellyfinWebhookHandler:
         if media.get('poster_url'):
             embed.set_thumbnail(url=media['poster_url'])
 
-        embed.set_author(name="Resuming on Jellyfin", icon_url=JELLYFIN_ICON)
+        embed.set_author(name="Jellyfin: Media Resumed", icon_url=JELLYFIN_ICON)
         embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['play_method']} • {self.details['session']['client']}")
 
         return embed
@@ -238,7 +239,22 @@ class JellyfinWebhookHandler:
         if media.get('poster_url'):
             embed.set_thumbnail(url=media['poster_url'])
 
-        embed.set_author(name="Paused on Jellyfin", icon_url=JELLYFIN_ICON)
+        embed.set_author(name="Jellyfin: Media Paused", icon_url=JELLYFIN_ICON)
+        embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['play_method']} • {self.details['session']['client']}")
+
+        return embed
+    
+    def embed_for_played(self, color):
+        media = self.details['media']
+        title = self.format_media_title(media)
+
+        imdb_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'IMDb'), None)
+        embed = EmbedBuilder(title=title, url=imdb_url, color=color)
+
+        if media.get('poster_url'):
+            embed.set_thumbnail(url=media['poster_url'])
+
+        embed.set_author(name="Jellyfin: Media Finished", icon_url=JELLYFIN_ICON)
         embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['play_method']} • {self.details['session']['client']}")
 
         return embed
@@ -269,7 +285,7 @@ class JellyfinWebhookHandler:
         if media.get("poster_url"):
             embed.set_thumbnail(url=media["poster_url"])
             
-        embed.set_author(name=f"New {media['type']} added to Jellyfin", icon_url=JELLYFIN_ICON)
+        embed.set_author(name=f"Jellyfin: New {media['type']} added", icon_url=JELLYFIN_ICON)
         return embed
 
     def build_links(self):

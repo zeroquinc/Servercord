@@ -15,10 +15,10 @@ async def process_ratings(ratings_channel, username):
 
     async def process_rating(rating):
         author_formats = {
-            'show': "A show has been rated on Trakt",
-            'season': "A season has been rated on Trakt",
-            'episode': "An episode has been rated on Trakt",
-            'movie': "A movie has been rated on Trakt"
+            'show': "Trakt: A show has been rated",
+            'season': "Trakt: A season has been rated",
+            'episode': "Trakt: An episode has been rated",
+            'movie': "Trakt: A movie has been rated"
         }
         title_formats = {
             'show': f"{rating.show_title}",

@@ -44,7 +44,7 @@ def create_embed(item_type, items, week, footer_text):
         "fields": [],
         "thumbnail": {"url": ""},
         "image": {"url": DISCORD_THUMBNAIL},
-        "author": {"name": f"Trakt - Top {item_type.capitalize()}s in Week {week}", "icon_url": TRAKT_ICON},
+        "author": {"name": f"Trakt: Top {item_type.capitalize()}s in Week {week}", "icon_url": TRAKT_ICON},
         "footer": {"text": footer_text}
     }
 

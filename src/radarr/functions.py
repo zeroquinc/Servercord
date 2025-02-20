@@ -8,11 +8,13 @@ from utils.custom_logger import logger
 
 async def process_webhook(handler, channel):
     def build_grab_embed():
-        embed = EmbedBuilder(title=handler.embed_title, description=f"```{handler.release_title}```", color=0x9e7a18)
+        embed = EmbedBuilder(title=handler.embed_title, description=f"{handler.release_title}", color=0x9e7a18)
+        embed.add_field(name="Quality", value=handler.quality, inline=True)
+        embed.add_field(name="Size", value=Converter.bytes_to_human_readable(handler.size), inline=True)
+        embed.add_field(name="Indexer", value=handler.indexer, inline=True)
         embed.add_field(name="Custom Formats", value=f"```{Formatter.format_custom_formats(handler.custom_format_score, handler.custom_formats)}```", inline=False)
         embed.set_thumbnail(url=handler.poster)
-        embed.set_author(name="A new grab by Radarr", icon_url=RADARR_ICON)
-        embed.set_footer(text=f"{handler.quality} • {Converter.bytes_to_human_readable(handler.size)} • {handler.indexer}")
+        embed.set_author(name="Radarr: New Grab", icon_url=RADARR_ICON)
 
         logger.info(f"Sending grab embed to Discord: {handler.release_title} - {handler.embed_title}")
 
