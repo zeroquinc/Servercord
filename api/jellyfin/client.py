@@ -14,6 +14,7 @@ class JellyfinWebhookHandler:
     def extract_details(self):  
         try:
             logger.debug("Extracting details from Jellyfin payload.")
+            logger.debug(f"Payload: {json.dumps(self.payload, indent=4)}")
 
             data = {k: self.payload.get(k, {}) for k in ["Event", "Item", "User", "Session", "Server", "Series"]}
             media = data["Item"]
@@ -95,6 +96,7 @@ class JellyfinWebhookHandler:
             "client": session.get("Client", "Unknown Client"),
             "remote_ip": session.get("RemoteEndPoint", "Unknown IP"),
             "is_paused": session.get("PlayState", {}).get("IsPaused", False),
+            "play_method": session.get("PlayState", {}).get("PlayMethod", "Unknown"),
         }
 
     def extract_server_details(self, server):
@@ -150,7 +152,7 @@ class JellyfinWebhookHandler:
             embed.set_thumbnail(url=media['poster_url'])
 
         embed.set_author(name="Now Playing on Jellyfin", icon_url=JELLYFIN_ICON)
-        embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['client']} ({self.details['session']['device_name']})")
+        embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['play_method']} • {self.details['session']['client']} ({self.details['session']['device_name']})")
 
         return embed
 
