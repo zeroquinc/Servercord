@@ -81,6 +81,29 @@ class JellyfinWebhookHandler:
             "premiere_date": series.get("PremiereDate", "Unknown"),
             "external_urls": series.get("ExternalUrls", []),
         }
+        
+    def extract_user_details(self, user):
+        return {
+            "username": user.get("Name", "Unknown User"),
+            "user_id": user.get("Id", "Unknown ID"),
+            "is_admin": user.get("Policy", {}).get("IsAdministrator", False),
+            "last_login": user.get("LastLoginDate", "Unknown"),
+        }
+
+    def extract_session_details(self, session):
+        return {
+            "device_name": session.get("DeviceName", "Unknown Device"),
+            "client": session.get("Client", "Unknown Client"),
+            "remote_ip": session.get("RemoteEndPoint", "Unknown IP"),
+            "is_paused": session.get("PlayState", {}).get("IsPaused", False),
+            "play_method": session.get("PlayState", {}).get("PlayMethod", "Unknown"),
+        }
+
+    def extract_server_details(self, server):
+        return {
+            "server_name": server.get("Name", "Unknown Server"),
+            "server_version": server.get("Version", "Unknown Version"),
+        }
 
     def get_poster_url(self, media, series, media_type):
         if media_type == "Episode":
