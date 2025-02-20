@@ -30,5 +30,9 @@ SONARR_CHANNEL = int(os.getenv("SONARR_CHANNEL"))
 SONARR_ICON = "https://i.imgur.com/dZSIKZE.png"
 UPDATE_CHANNEL = int(os.getenv("UPDATE_CHANNEL"))
 
+#  Jellyfin
+JELLYFIN_PLAYING = int(os.getenv("JELLYFIN_PLAYING"))
+JELLYFIN_CONTENT = int(os.getenv("JELLYFIN_CONTENT"))
+JELLYFIN_ICON = "https://i.imgur.com/c5x6GjJ.png"
 # Delay
 ENABLE_DELAY = os.getenv("ENABLE_DELAY") == "True"
