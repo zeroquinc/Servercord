@@ -9,7 +9,7 @@ class JellyfinWebhookHandler:
     def __init__(self, payload, discord_bot):
         self.payload = payload
         self.discord_bot = discord_bot
-        self.details = self.extract_details()   
+        self.details = self.extract_details()
 
     def extract_details(self):  
         try:
@@ -20,10 +20,10 @@ class JellyfinWebhookHandler:
             series = data["Series"]
             media_type = media.get("Type", "Unknown")
 
-            media_details = self.extract_media_details(media, series, media_type)  
-            user_details = self.extract_user_details(data["User"])  
-            session_details = self.extract_session_details(data["Session"])  
-            server_details = self.extract_server_details(data["Server"])  
+            media_details = self.extract_media_details(media, series, media_type)
+            user_details = self.extract_user_details(data["User"])
+            session_details = self.extract_session_details(data["Session"])
+            server_details = self.extract_server_details(data["Server"])
 
             return {
                 "event": data["Event"],
@@ -38,7 +38,7 @@ class JellyfinWebhookHandler:
             logger.error(f"Error extracting details: {e}")
             return {}
 
-    def extract_media_details(self, media, series, media_type):  
+    def extract_media_details(self, media, series, media_type):
         details = {
             "type": media_type,
             "name": media.get("Name", "Unknown"),
@@ -53,7 +53,7 @@ class JellyfinWebhookHandler:
             "runtime_seconds": media.get("RunTimeTicks", 0) / 10_000_000 if media.get("RunTimeTicks") else 0,
             "provider_ids": media.get("ProviderIds", {}),
             "external_urls": media.get("ExternalUrls", []),
-            "poster_url": self.get_poster_url(media, series, media_type),  
+            "poster_url": self.get_poster_url(media, series, media_type),
         }
 
         if media_type == "Movie":
@@ -67,7 +67,7 @@ class JellyfinWebhookHandler:
             details.update({
                 "season": media.get("ParentIndexNumber", "N/A"),
                 "episode": media.get("IndexNumber", "N/A"),
-                "series": self.extract_series_details(series)  
+                "series": self.extract_series_details(series)
             })
         return details
 
