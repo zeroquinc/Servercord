@@ -213,7 +213,7 @@ class JellyfinWebhookHandler:
 
     def embed_for_newcontent(self, color):
         media = self.details['media']
-        title = self.get_newcontent_title(media)
+        title = self.format_media_title(media)
         imdb_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'IMDb'), None)
         embed = EmbedBuilder(title=title, url=imdb_url, color=color)
 
