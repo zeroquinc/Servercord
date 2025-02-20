@@ -22,16 +22,11 @@ class JellyfinWebhookHandler:
             series = data["Series"]
             media_type = media.get("Type", "Unknown")
             item_id = media.get("Id")
+            event_type = data["Event"]
 
             if not item_id:
                 logger.warning("Item ID missing, skipping event.")
                 return None
-
-            if media_type in ["Person", "Folder"]:
-                logger.info("Ignoring event for Person & Folder type.")
-                return None  
-
-            event_type = data["Event"]
 
             # Handle ItemAdded logic
             if event_type == "ItemAdded":
@@ -172,14 +167,6 @@ class JellyfinWebhookHandler:
             return f"{media['series']['name']} - {media['name']} ({season}{episode})"
         else:
             return f"{media['name']} (Unknown Type)"
-
-    async def handle_webhook(self):
-        if self.details is None:
-            logger.info("Skipping webhook processing as details are None.")
-            return
-
-        logger.info(f"Processing Jellyfin webhook payload for event type: {self.details.get('event', 'Unknown Event')}")
-        await self.dispatch_embed()
 
     def determine_channel_id(self):
         return {
@@ -344,6 +331,22 @@ class JellyfinWebhookHandler:
         except ValueError as e:
             print(f"Error parsing date: {e}")
             return "Unknown Date"
+        
+    async def handle_webhook(self):
+        media_type = self.payload.get("Item", {}).get("Type", "Unknown")
+        
+        if media_type in ["Person", "Folder"]:
+            logger.info(f"Blocking webhook request for media type: {media_type}")
+            return  # Stop processing immediately
+
+        self.details = self.extract_details()
+        
+        if self.details is None:
+            logger.info("Skipping webhook processing as details are None.")
+            return
+
+        logger.info(f"Processing Jellyfin webhook payload for event type: {self.details.get('event', 'Unknown Event')}")
+        await self.dispatch_embed()
 
     async def dispatch_embed(self):
         embed = self.generate_embed()
