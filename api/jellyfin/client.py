@@ -11,7 +11,7 @@ class JellyfinWebhookHandler:
     def __init__(self, payload, discord_bot):
         self.payload = payload
         self.discord_bot = discord_bot
-        self.details = self.extract_details()
+        self.details = None
 
     def extract_details(self):  
         try:
