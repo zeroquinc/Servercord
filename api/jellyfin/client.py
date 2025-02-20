@@ -14,21 +14,24 @@ class JellyfinWebhookHandler:
     def extract_details(self):  
         try:
             logger.debug("Extracting details from Jellyfin payload.")
+            logger.debug(f"Payload: {json.dumps(self.payload, indent=4)}")
 
             data = {k: self.payload.get(k, {}) for k in ["Event", "Item", "User", "Session", "Server", "Series"]}
-            logger.debug(f"Extracted data: {json.dumps(data, indent=4)}")
             media = data["Item"]
             series = data["Series"]
             media_type = media.get("Type", "Unknown")
-            if media_type == "Person": # Ignore Person type media
-                return {}
+
+            # Ignore Persons
+            if media_type == "Person":
+                logger.info("Ignoring event for Person type.")
+                return None  
 
             media_details = self.extract_media_details(media, series, media_type)
             user_details = self.extract_user_details(data["User"])
             session_details = self.extract_session_details(data["Session"])
             server_details = self.extract_server_details(data["Server"])
 
-            return {
+            result = {
                 "event": data["Event"],
                 "timestamp": datetime.utcnow().isoformat(),
                 "media": media_details,
@@ -37,9 +40,13 @@ class JellyfinWebhookHandler:
                 "server": server_details,
             }
 
+            logger.debug(f"Returning details: {result}")
+
+            return result
+
         except Exception as e:
             logger.error(f"Error extracting details: {e}")
-            return {}
+            return None
 
     def extract_media_details(self, media, series, media_type):
         details = {
@@ -126,8 +133,12 @@ class JellyfinWebhookHandler:
             return f"{media['name']} (Unknown Type)"
 
     async def handle_webhook(self):
+        if self.details is None:
+            logger.info("Skipping webhook processing as details are None.")
+            return
+
         logger.info(f"Processing Jellyfin webhook payload for event type: {self.details.get('event', 'Unknown Event')}")
-        await self.dispatch_embed()  
+        await self.dispatch_embed()
 
     def determine_channel_id(self):
         return {
