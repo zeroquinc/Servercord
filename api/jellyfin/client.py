@@ -205,8 +205,8 @@ class JellyfinWebhookHandler:
         media = self.details['media']
         title = self.format_media_title(media)
 
-        imdb_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'IMDb'), None)
-        embed = EmbedBuilder(title=title, url=imdb_url, color=color)
+        trakt_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'Trakt'), None)
+        embed = EmbedBuilder(title=title, url=trakt_url, color=color)
 
         if media.get('poster_url'):
             embed.set_thumbnail(url=media['poster_url'])
@@ -223,8 +223,8 @@ class JellyfinWebhookHandler:
         media = self.details['media']
         title = self.format_media_title(media)
 
-        imdb_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'IMDb'), None)
-        embed = EmbedBuilder(title=title, url=imdb_url, color=color)
+        trakt_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'Trakt'), None)
+        embed = EmbedBuilder(title=title, url=trakt_url, color=color)
 
         if media.get('poster_url'):
             embed.set_thumbnail(url=media['poster_url'])
@@ -241,8 +241,8 @@ class JellyfinWebhookHandler:
         media = self.details['media']
         title = self.format_media_title(media)
 
-        imdb_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'IMDb'), None)
-        embed = EmbedBuilder(title=title, url=imdb_url, color=color)
+        trakt_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'Trakt'), None)
+        embed = EmbedBuilder(title=title, url=trakt_url, color=color)
 
         if media.get('poster_url'):
             embed.set_thumbnail(url=media['poster_url'])
@@ -259,8 +259,8 @@ class JellyfinWebhookHandler:
         media = self.details['media']
         title = self.format_media_title(media)
 
-        imdb_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'IMDb'), None)
-        embed = EmbedBuilder(title=title, url=imdb_url, color=color)
+        trakt_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'Trakt'), None)
+        embed = EmbedBuilder(title=title, url=trakt_url, color=color)
 
         if media.get('poster_url'):
             embed.set_thumbnail(url=media['poster_url'])
@@ -276,8 +276,8 @@ class JellyfinWebhookHandler:
     def embed_for_newcontent(self, color):
         media = self.details['media']
         title = self.format_media_title(media)
-        imdb_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'IMDb'), None)
-        embed = EmbedBuilder(title=title, url=imdb_url, color=color)
+        trakt_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'Trakt'), None)
+        embed = EmbedBuilder(title=title, url=trakt_url, color=color)
 
         # Format plot with spoilers if it's an Episode or Series
         plot = media.get("overview", "No overview available.")
