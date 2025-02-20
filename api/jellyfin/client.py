@@ -91,12 +91,15 @@ class JellyfinWebhookHandler:
         }
 
     def extract_session_details(self, session):
+        play_method = session.get("PlayState", {}).get("PlayMethod", "Unknown")
+        if play_method == "DirectStream":
+            play_method = "Direct Play"
         return {
             "device_name": session.get("DeviceName", "Unknown Device"),
             "client": session.get("Client", "Unknown Client"),
             "remote_ip": session.get("RemoteEndPoint", "Unknown IP"),
             "is_paused": session.get("PlayState", {}).get("IsPaused", False),
-            "play_method": session.get("PlayState", {}).get("PlayMethod", "Unknown"),
+            "play_method": play_method,
         }
 
     def extract_server_details(self, server):
@@ -152,7 +155,7 @@ class JellyfinWebhookHandler:
             embed.set_thumbnail(url=media['poster_url'])
 
         embed.set_author(name="Now Playing on Jellyfin", icon_url=JELLYFIN_ICON)
-        embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['play_method']} • {self.details['session']['client']} ({self.details['session']['device_name']})")
+        embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['play_method']} • {self.details['session']['client']}")
 
         return embed
 
