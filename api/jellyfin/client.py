@@ -136,12 +136,17 @@ class JellyfinWebhookHandler:
         }
 
     def extract_session_details(self, session):
+        play_method = session.get("PlayState", {}).get("PlayMethod", "Unknown")
+
+        if play_method == "DirectStream":
+            play_method = "Direct Play"
+
         return {
             "device_name": session.get("DeviceName", "Unknown Device"),
             "client": session.get("Client", "Unknown Client"),
             "remote_ip": session.get("RemoteEndPoint", "Unknown IP"),
             "is_paused": session.get("PlayState", {}).get("IsPaused", False),
-            "play_method": session.get("PlayState", {}).get("PlayMethod", "Unknown"),
+            "play_method": play_method,
         }
 
     def extract_server_details(self, server):
