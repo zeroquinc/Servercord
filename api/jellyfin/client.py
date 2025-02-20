@@ -20,10 +20,13 @@ class JellyfinWebhookHandler:
             series = data["Series"]
             media_type = media.get("Type", "Unknown")
 
-            # Ignore Persons
             if media_type == "Person":
                 logger.info("Ignoring event for Person type.")
                 return None  
+
+            if data["Event"] == "ItemUpdated" and "MetadataImport" not in self.payload.get("AdditionalData", []):
+                logger.info("Ignoring ItemUpdated event without MetadataImport.")
+                return None
 
             media_details = self.extract_media_details(media, series, media_type)
             user_details = self.extract_user_details(data["User"])
@@ -40,7 +43,6 @@ class JellyfinWebhookHandler:
             }
 
             logger.debug(f"Returning details: {result}")
-
             return result
 
         except Exception as e:
@@ -142,7 +144,7 @@ class JellyfinWebhookHandler:
     def determine_channel_id(self):
         return {
             'Play': JELLYFIN_PLAYING,
-            'ItemAdded': JELLYFIN_CONTENT,
+            'ItemUpdated': JELLYFIN_CONTENT,
         }.get(self.details.get('event'), 'default_channel_id')
 
     def get_embed_color(self):
@@ -169,7 +171,7 @@ class JellyfinWebhookHandler:
             embed.set_thumbnail(url=media['poster_url'])
 
         embed.set_author(name="Now Playing on Jellyfin", icon_url=JELLYFIN_ICON)
-        embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['play_method']} • {self.details['session']['client']} ({self.details['session']['device_name']})")
+        embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['play_method']} • {self.details['session']['client']}")
 
         return embed
 
