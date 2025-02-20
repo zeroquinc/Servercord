@@ -157,13 +157,8 @@ class JellyfinWebhookHandler:
     def embed_for_newcontent(self, color):
         media = self.details['media']
         title = self.get_newcontent_title(media)
-        embed = EmbedBuilder(title=title, color=color)
-
         imdb_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'IMDb'), None)
-        if imdb_url:
-            embed.set_title(title, url=imdb_url)
-        else:
-            embed.set_title(title)
+        embed = EmbedBuilder(title=title, url=imdb_url, color=color)
 
         # Format plot with spoilers if it's an Episode or Series
         plot = media.get("overview", "No overview available.")
