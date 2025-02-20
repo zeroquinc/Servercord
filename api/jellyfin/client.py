@@ -211,7 +211,7 @@ class JellyfinWebhookHandler:
             
         embed.add_field(name="User", value=self.details['user']['username'], inline=True)
         embed.add_field(name="Method", value=self.details['session']['play_method'], inline=True)
-        embed.add_field(name="Device", value=self.details['session']['device_name'], inline=True)
+        embed.add_field(name="Client", value=self.details['session']['client'], inline=True)
 
         embed.set_author(name="Jellyfin: Media Playing", icon_url=JELLYFIN_ICON)
 
@@ -229,7 +229,7 @@ class JellyfinWebhookHandler:
             
         embed.add_field(name="User", value=self.details['user']['username'], inline=True)
         embed.add_field(name="Method", value=self.details['session']['play_method'], inline=True)
-        embed.add_field(name="Device", value=self.details['session']['device_name'], inline=True)
+        embed.add_field(name="Client", value=self.details['session']['client'], inline=True)
         
         embed.set_author(name="Jellyfin: Media Resumed", icon_url=JELLYFIN_ICON)
 
@@ -247,7 +247,7 @@ class JellyfinWebhookHandler:
             
         embed.add_field(name="User", value=self.details['user']['username'], inline=True)
         embed.add_field(name="Method", value=self.details['session']['play_method'], inline=True)
-        embed.add_field(name="Device", value=self.details['session']['device_name'], inline=True)
+        embed.add_field(name="Client", value=self.details['session']['client'], inline=True)
 
         embed.set_author(name="Jellyfin: Media Paused", icon_url=JELLYFIN_ICON)
 
@@ -265,7 +265,7 @@ class JellyfinWebhookHandler:
             
         embed.add_field(name="User", value=self.details['user']['username'], inline=True)
         embed.add_field(name="Method", value=self.details['session']['play_method'], inline=True)
-        embed.add_field(name="Device", value=self.details['session']['device_name'], inline=True)
+        embed.add_field(name="Client", value=self.details['session']['client'], inline=True)
 
         embed.set_author(name="Jellyfin: Media Finished", icon_url=JELLYFIN_ICON)
 
