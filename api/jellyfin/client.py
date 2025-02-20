@@ -150,7 +150,7 @@ class JellyfinWebhookHandler:
             embed.set_thumbnail(url=media['poster_url'])
 
         embed.set_author(name="Now Playing on Jellyfin", icon_url=JELLYFIN_ICON)
-        embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['client']}")
+        embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['client']} ({self.details['session']['device_name']})")
 
         return embed
 
