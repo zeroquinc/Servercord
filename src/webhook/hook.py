@@ -4,6 +4,7 @@ from utils.custom_logger import logger
 from api.sonarr.client import SonarrWebhookHandler
 from api.radarr.client import RadarrWebhookHandler
 from api.plex.client import PlexWebhookHandler
+from api.jellyfin.client import JellyfinWebhookHandler
 
 class HandleWebHook:
     # Initialize the webhook receiver
@@ -15,6 +16,7 @@ class HandleWebHook:
         self.app.router.add_post('/sonarr_webhook', self.handle_webhook(SonarrWebhookHandler))
         self.app.router.add_post('/radarr_webhook', self.handle_webhook(RadarrWebhookHandler))
         self.app.router.add_post('/plex_webhook', self.handle_webhook(PlexWebhookHandler))
+        self.app.router.add_post('/jellyfin_webhook', self.handle_webhook(JellyfinWebhookHandler))
         self.uvicorn_params = {
             "host": self.host,
             "port": self.port,
