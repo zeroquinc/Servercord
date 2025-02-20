@@ -144,12 +144,14 @@ class JellyfinWebhookHandler:
     def determine_channel_id(self):
         return {
             'Play': JELLYFIN_PLAYING,
-            'ItemUpdated': JELLYFIN_CONTENT,
+            'Resume': JELLYFIN_PLAYING,
+            'ItemUpdated': JELLYFIN_CONTENT
         }.get(self.details.get('event'), 'default_channel_id')
 
     def get_embed_color(self):
         return {
             'Play': 0x6c76cc,
+            'Resume': 0xc034eb,
             'ItemAdded': 0x1e90ff,
         }.get(self.details.get('event'), 0x000000)
 
@@ -157,6 +159,7 @@ class JellyfinWebhookHandler:
         embed_color = self.get_embed_color()
         return {
             'Play': self.embed_for_playing,
+            'Resume': self.embed_for_resuming,
             'ItemUpdated': self.embed_for_newcontent
         }.get(self.details.get('event'), lambda _: None)(embed_color)
 
@@ -171,6 +174,21 @@ class JellyfinWebhookHandler:
             embed.set_thumbnail(url=media['poster_url'])
 
         embed.set_author(name="Now Playing on Jellyfin", icon_url=JELLYFIN_ICON)
+        embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['play_method']} • {self.details['session']['client']}")
+
+        return embed
+    
+    def embed_for_resuming(self, color):
+        media = self.details['media']
+        title = self.format_media_title(media)
+
+        imdb_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'IMDb'), None)
+        embed = EmbedBuilder(title=title, url=imdb_url, color=color)
+
+        if media.get('poster_url'):
+            embed.set_thumbnail(url=media['poster_url'])
+
+        embed.set_author(name="Now Resuming on Jellyfin", icon_url=JELLYFIN_ICON)
         embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['play_method']} • {self.details['session']['client']}")
 
         return embed
@@ -228,7 +246,7 @@ class JellyfinWebhookHandler:
         # Add PremiereDate for Episodes
         if media["type"] == "Episode" and media.get("premiere_date"):
             premiere_date = self.format_premiere_date(media["premiere_date"])
-            footer_parts.append(f"Premiered: {premiere_date}")
+            footer_parts.append(f"Air date: {premiere_date}")
 
         # Add runtime if available
         if media.get("runtime_seconds"):
