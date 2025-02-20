@@ -14,9 +14,9 @@ class JellyfinWebhookHandler:
     def extract_details(self):  
         try:
             logger.debug("Extracting details from Jellyfin payload.")
-            logger.debug(f"Payload: {json.dumps(self.payload, indent=4)}")
 
             data = {k: self.payload.get(k, {}) for k in ["Event", "Item", "User", "Session", "Server", "Series"]}
+            logger.debug(f"Extracted data: {json.dumps(data, indent=4)}")
             media = data["Item"]
             series = data["Series"]
             media_type = media.get("Type", "Unknown")
