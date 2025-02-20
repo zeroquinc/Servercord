@@ -236,6 +236,13 @@ class JellyfinWebhookHandler:
             footer_parts.append(duration)
 
         return " • ".join(footer_parts)
+    
+    def format_premiere_date(self, date_str):
+        """Formats a premiere date into DD/MM/YYYY format."""
+        try:
+            return datetime.fromisoformat(date_str.rstrip("Z")).strftime("%d/%m/%Y")
+        except ValueError:
+            return "Unknown Date"
 
     async def dispatch_embed(self):
         embed = self.generate_embed()
