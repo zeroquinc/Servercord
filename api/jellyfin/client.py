@@ -48,9 +48,9 @@ class JellyfinWebhookHandler:
                     logger.info(f"Matching ItemUpdated found for ItemAdded ID {item_id}. Processing event.")
                     cached_data = self.item_cache.pop(item_id)  # Remove from cache
                     data = cached_data["data"]  # Use stored ItemAdded data
-
                 else:
-                    logger.info(f"ItemUpdated received without prior ItemAdded for ID {item_id}, processing normally.")
+                    logger.info(f"ItemUpdated received without prior ItemAdded for ID {item_id}. Skipping event.")
+                    return None  # Ignore ItemUpdated if no corresponding ItemAdded
 
             # Process media details
             media_details = self.extract_media_details(media, series, media_type)
