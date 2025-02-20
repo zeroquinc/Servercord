@@ -148,10 +148,17 @@ class JellyfinWebhookHandler:
 
     def embed_for_playing(self, color):
         media = self.details['media']
-        embed = EmbedBuilder(title=self.format_media_title(media), color=color)
+        title = self.format_media_title(media)
+
+        imdb_url = next((url['Url'] for url in media.get('external_urls', []) if url.get('Name') == 'IMDb'), None)
+        embed = EmbedBuilder(title=title, url=imdb_url, color=color)
+
         if media.get('poster_url'):
             embed.set_thumbnail(url=media['poster_url'])
+
         embed.set_author(name="Now Playing on Jellyfin", icon_url=JELLYFIN_ICON)
+        embed.set_footer(text=f"{self.details['user']['username']} • {self.details['session']['play_method']} • {self.details['session']['client']} ({self.details['session']['device_name']})")
+
         return embed
 
     def embed_for_newcontent(self, color):
