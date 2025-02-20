@@ -1,11 +1,13 @@
-import json
 from datetime import datetime
+import time
 from config.globals import JELLYFIN_ICON, JELLYFIN_PLAYING, JELLYFIN_CONTENT
 from src.discord.embed import EmbedBuilder
 from utils.custom_logger import logger
 from api.tmdb.client import TMDb
 
 class JellyfinWebhookHandler:
+    item_cache = {}  # Stores temporary ItemAdded events
+
     def __init__(self, payload, discord_bot):
         self.payload = payload
         self.discord_bot = discord_bot
@@ -19,22 +21,50 @@ class JellyfinWebhookHandler:
             media = data["Item"]
             series = data["Series"]
             media_type = media.get("Type", "Unknown")
+            item_id = media.get("Id")
 
-            if media_type == "Person":
-                logger.info("Ignoring event for Person type.")
-                return None  
-
-            if data["Event"] == "ItemUpdated" and "MetadataImport" not in self.payload.get("AdditionalData", []):
-                logger.info("Ignoring ItemUpdated event without MetadataImport.")
+            if not item_id:
+                logger.warning("Item ID missing, skipping event.")
                 return None
 
+            if media_type in ["Person", "Folder"]:
+                logger.info("Ignoring event for Person & Folder type.")
+                return None  
+
+            event_type = data["Event"]
+
+            # Handle ItemAdded logic
+            if event_type == "ItemAdded":
+                logger.info(f"Storing ItemAdded event for ID {item_id}.")
+                self.item_cache[item_id] = {
+                    "timestamp": time.time(),
+                    "data": data
+                }
+                return None  # Do not process yet
+
+            # Handle ItemUpdated logic
+            if event_type == "ItemUpdated":
+                if "MetadataDownload" not in self.payload.get("AdditionalData", []):
+                    logger.info("Ignoring ItemUpdated event without MetadataDownload.")
+                    return None
+
+                # Check if a corresponding ItemAdded exists
+                if item_id in self.item_cache:
+                    logger.info(f"Matching ItemUpdated found for ItemAdded ID {item_id}. Processing event.")
+                    cached_data = self.item_cache.pop(item_id)  # Remove from cache
+                    data = cached_data["data"]  # Use stored ItemAdded data
+
+                else:
+                    logger.info(f"ItemUpdated received without prior ItemAdded for ID {item_id}, processing normally.")
+
+            # Process media details
             media_details = self.extract_media_details(media, series, media_type)
             user_details = self.extract_user_details(data["User"])
             session_details = self.extract_session_details(data["Session"])
             server_details = self.extract_server_details(data["Server"])
 
             result = {
-                "event": data["Event"],
+                "event": event_type,
                 "timestamp": datetime.utcnow().isoformat(),
                 "media": media_details,
                 "user": user_details,
@@ -48,6 +78,16 @@ class JellyfinWebhookHandler:
         except Exception as e:
             logger.error(f"Error extracting details: {e}")
             return None
+
+    @classmethod
+    def cleanup_cache(cls, max_age=300):
+        """Remove old entries from the item cache (default: 5 minutes)."""
+        current_time = time.time()
+        expired_keys = [key for key, value in cls.item_cache.items() if current_time - value["timestamp"] > max_age]
+
+        for key in expired_keys:
+            del cls.item_cache[key]
+            logger.info(f"Removed expired ItemAdded event from cache: {key}")
 
     def extract_media_details(self, media, series, media_type):
         details = {
@@ -229,6 +269,7 @@ class JellyfinWebhookHandler:
         if footer_text:
             embed.set_footer(text=footer_text)
 
+        # Build and add links field
         links = self.build_links()
         if links:
             embed.add_field(name="Links", value=links, inline=False)
@@ -241,12 +282,36 @@ class JellyfinWebhookHandler:
 
     def build_links(self):
         media = self.details['media']
-        links = []
-        for url in media.get("external_urls", []):
-            if url['Name'] in ['IMDb', 'TMDb', 'Trakt']:
-                links.append(f"[{url['Name']}]({url['Url']})")
+        links = [f"[{url['Name']}]({url['Url']})" for url in media.get("external_urls", []) if url['Name'] in ['IMDb', 'TMDb', 'Trakt']]
+
+        # Only add YouTube trailer for Movies
+        if media.get("type") == "Movie":
+            youtube_url = self.get_youtube_trailer()
+            if youtube_url:
+                links.append(f"[YouTube]({youtube_url})")
+
         return " • ".join(links)
-    
+
+    def get_youtube_trailer(self):
+        media = self.details['media']
+        trailers = media.get("remote_trailers", [])
+
+        if not trailers:
+            return None
+
+        # Look for an "Official Trailer"
+        for trailer in trailers:
+            if trailer.get("Name") == "Official Trailer":
+                return trailer["Url"]
+
+        # Look for any trailer containing "Trailer" in its name
+        for trailer in trailers:
+            if "Trailer" in trailer.get("Name", ""):
+                return trailer["Url"]
+
+        # Fallback to the first available trailer
+        return trailers[0]["Url"]
+        
     def build_footer(self, media):
         footer_parts = []
         
