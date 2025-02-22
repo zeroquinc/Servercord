@@ -23,16 +23,27 @@ class JellyfinWebhookHandler:
             media_type = media.get("Type", "Unknown")
             item_id = media.get("Id")
             event_type = data["Event"]
+            media_name = media.get("Name")
 
-            if not item_id:
-                logger.warning("Item ID missing, skipping event.")
+            if not item_id or not media_name:
+                logger.warning("Item ID or Name missing, skipping event.")
                 return None
+
+            # Handle caching based on media name for both ItemAdded and ItemUpdated
+            current_time = time.time()
+            if media_name in self.name_cache:
+                last_updated = self.name_cache[media_name]
+                if current_time - last_updated < 86400:  # 24 hours
+                    logger.info(f"Skipping duplicate event for {media_name} within 24h.")
+                    return None
+                
+            self.name_cache[media_name] = current_time  # Update timestamp
 
             # Handle ItemAdded logic
             if event_type == "ItemAdded":
-                logger.info(f"Storing ItemAdded event for ID {item_id}.")
+                logger.info(f"Storing ItemAdded event for ID {item_id} and name {media_name}.")
                 self.item_cache[item_id] = {
-                    "timestamp": time.time(),
+                    "timestamp": current_time,
                     "data": data
                 }
                 return None  # Do not process yet
