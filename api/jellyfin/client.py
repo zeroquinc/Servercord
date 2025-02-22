@@ -1,69 +1,27 @@
 from datetime import datetime
-import time
 from config.globals import JELLYFIN_ICON, JELLYFIN_PLAYING, JELLYFIN_CONTENT
 from src.discord.embed import EmbedBuilder
 from utils.custom_logger import logger
 from api.tmdb.client import TMDb
+from api.jellyfin.cache import EventCache
 
 class JellyfinWebhookHandler:
-    item_cache = {}  # Stores temporary ItemAdded events
+    cache = EventCache()
 
     def __init__(self, payload, discord_bot):
         self.payload = payload
         self.discord_bot = discord_bot
         self.details = None
 
-    def extract_details(self):  
+    def extract_details(self):
         try:
             logger.debug("Extracting details from Jellyfin payload.")
-
             data = {k: self.payload.get(k, {}) for k in ["Event", "Item", "User", "Session", "Server", "Series"]}
             media = data["Item"]
             series = data["Series"]
             media_type = media.get("Type", "Unknown")
-            item_id = media.get("Id")
             event_type = data["Event"]
-            media_name = media.get("Name")
 
-            if not item_id or not media_name:
-                logger.warning("Item ID or Name missing, skipping event.")
-                return None
-
-            # Handle caching based on media name for both ItemAdded and ItemUpdated
-            current_time = time.time()
-            if media_name in self.name_cache:
-                last_updated = self.name_cache[media_name]
-                if current_time - last_updated < 86400:  # 24 hours
-                    logger.info(f"Skipping duplicate event for {media_name} within 24h.")
-                    return None
-                
-            self.name_cache[media_name] = current_time  # Update timestamp
-
-            # Handle ItemAdded logic
-            if event_type == "ItemAdded":
-                logger.info(f"Storing ItemAdded event for ID {item_id} and name {media_name}.")
-                self.item_cache[item_id] = {
-                    "timestamp": current_time,
-                    "data": data
-                }
-                return None  # Do not process yet
-
-            # Handle ItemUpdated logic
-            if event_type == "ItemUpdated":
-                if "MetadataDownload" not in self.payload.get("AdditionalData", []):
-                    logger.info("Ignoring ItemUpdated event without MetadataDownload.")
-                    return None
-
-                # Check if a corresponding ItemAdded exists
-                if item_id in self.item_cache:
-                    logger.info(f"Matching ItemUpdated found for ItemAdded ID {item_id}. Processing event.")
-                    cached_data = self.item_cache.pop(item_id)  # Remove from cache
-                    data = cached_data["data"]  # Use stored ItemAdded data
-                else:
-                    logger.info(f"ItemUpdated received without prior ItemAdded for ID {item_id}. Skipping event.")
-                    return None  # Ignore ItemUpdated if no corresponding ItemAdded
-
-            # Process media details
             media_details = self.extract_media_details(media, series, media_type)
             user_details = self.extract_user_details(data["User"])
             session_details = self.extract_session_details(data["Session"])
@@ -84,16 +42,60 @@ class JellyfinWebhookHandler:
         except Exception as e:
             logger.error(f"Error extracting details: {e}")
             return None
+        
+    async def handle_webhook(self):
+        media_type = self.payload.get("Item", {}).get("Type", "Unknown")
+        
+        if media_type in ["Person", "Folder", "Season", "Series"]:
+            logger.info(f"Blocking webhook request for media type: {media_type}")
+            return  # Stop processing immediately
 
-    @classmethod
-    def cleanup_cache(cls, max_age=300):
-        """Remove old entries from the item cache (default: 5 minutes)."""
-        current_time = time.time()
-        expired_keys = [key for key, value in cls.item_cache.items() if current_time - value["timestamp"] > max_age]
+        event_type = self.payload.get("Event")
+        item_id = self.payload.get("Item", {}).get("Id")
+        media_name = self.payload.get("Item", {}).get("Name")
 
-        for key in expired_keys:
-            del cls.item_cache[key]
-            logger.info(f"Removed expired ItemAdded event from cache: {key}")
+        if not item_id or not media_name:
+            logger.warning("Item ID or Name missing, skipping event.")
+            return
+
+        if self.cache.is_duplicate(media_name):
+            logger.info(f"Skipping duplicate event for {media_name} within 24h.")
+            return
+
+        if event_type == "ItemAdded":
+            self.cache.store_item_added(item_id, self.payload)
+            return  # Do not process yet
+
+        if event_type == "ItemUpdated":
+            if "MetadataDownload" not in self.payload.get("AdditionalData", []):
+                logger.info("Ignoring ItemUpdated event without MetadataDownload.")
+                return
+
+            cached_data = self.cache.get_item_added(item_id)
+            if cached_data:
+                logger.info(f"Processing matched ItemUpdated for ItemAdded ID {item_id}.")
+                self.payload = cached_data["data"]
+            else:
+                logger.info(f"ItemUpdated received without prior ItemAdded for ID {item_id}. Skipping event.")
+                return
+
+        self.details = self.extract_details()
+        
+        if self.details is None:
+            logger.info("Skipping webhook processing as details are None.")
+            return
+
+        logger.info(f"Processing Jellyfin webhook payload for event type: {self.details.get('event', 'Unknown Event')}")
+        await self.dispatch_embed()
+
+    async def dispatch_embed(self):
+        embed = self.generate_embed()
+        channel_id = self.determine_channel_id()
+        channel = self.discord_bot.bot.get_channel(channel_id)
+        if channel:
+            await embed.send_embed(channel)
+        else:
+            logger.error(f"Channel with ID {channel_id} not found.")
 
     def extract_media_details(self, media, series, media_type):
         details = {
@@ -377,28 +379,3 @@ class JellyfinWebhookHandler:
         except ValueError as e:
             print(f"Error parsing date: {e}")
             return "Unknown Date"
-        
-    async def handle_webhook(self):
-        media_type = self.payload.get("Item", {}).get("Type", "Unknown")
-        
-        if media_type in ["Person", "Folder", "Season", "Series"]:
-            logger.info(f"Blocking webhook request for media type: {media_type}")
-            return  # Stop processing immediately
-
-        self.details = self.extract_details()
-        
-        if self.details is None:
-            logger.info("Skipping webhook processing as details are None.")
-            return
-
-        logger.info(f"Processing Jellyfin webhook payload for event type: {self.details.get('event', 'Unknown Event')}")
-        await self.dispatch_embed()
-
-    async def dispatch_embed(self):
-        embed = self.generate_embed()
-        channel_id = self.determine_channel_id()
-        channel = self.discord_bot.bot.get_channel(channel_id)
-        if channel:
-            await embed.send_embed(channel)
-        else:
-            logger.error(f"Channel with ID {channel_id} not found.")
