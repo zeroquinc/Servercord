@@ -21,6 +21,7 @@ class JellyfinWebhookHandler:
             series = data["Series"]
             media_type = media.get("Type", "Unknown")
             event_type = data["Event"]
+            logger.debug(f"Extracted data: {data}")
 
             media_details = self.extract_media_details(media, series, media_type)
             user_details = self.extract_user_details(data["User"])
