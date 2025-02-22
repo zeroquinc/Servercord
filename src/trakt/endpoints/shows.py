@@ -1,4 +1,4 @@
-from api.trakt.models.show import Show
+from src.trakt.models.show import Show
 
 class Shows:
     def __init__(self, client):

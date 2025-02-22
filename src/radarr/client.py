@@ -1,7 +1,7 @@
 import json
 from utils.custom_logger import logger
 
-from api.tmdb.client import TMDb
+from src.tmdb.client import TMDb
 from src.radarr.functions import process_webhook
 from config.globals import RADARR_CHANNEL, UPDATE_CHANNEL
 

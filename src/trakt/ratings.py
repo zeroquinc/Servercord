@@ -1,5 +1,5 @@
 from src.discord.embed import EmbedBuilder
-from api.trakt.client import TraktClient
+from src.trakt.client import TraktClient
 from utils.datetime import TimeCalculator
 
 from config.globals import TRAKT_ICON

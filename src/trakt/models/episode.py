@@ -1,4 +1,4 @@
-from api.tmdb.client import TMDb
+from src.tmdb.client import TMDb
 
 class Episode:
     def __init__(self, data):

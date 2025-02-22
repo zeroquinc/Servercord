@@ -1,8 +1,8 @@
 from dateutil.parser import parse
 from dateutil.tz import tzlocal
 
-from api.trakt.models.rating import Rating
-from api.trakt.models.favorite import Favorite
+from src.trakt.models.rating import Rating
+from src.trakt.models.favorite import Favorite
 
 class User:
     def __init__(self, client, username):

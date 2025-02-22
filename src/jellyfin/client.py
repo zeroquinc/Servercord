@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from config.globals import JELLYFIN_ICON, JELLYFIN_PLAYING, JELLYFIN_CONTENT
 from src.discord.embed import EmbedBuilder
+from src.tmdb.client import TMDb
 from utils.custom_logger import logger
-from api.tmdb.client import TMDb
-from api.jellyfin.cache import EventCache
+from src.jellyfin.cache import EventCache
 
 class JellyfinWebhookHandler:
     cache = EventCache()
@@ -29,7 +29,7 @@ class JellyfinWebhookHandler:
 
             result = {
                 "event": event_type,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "media": media_details,
                 "user": user_details,
                 "session": session_details,

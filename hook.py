@@ -1,9 +1,9 @@
 from aiohttp import web
 from utils.custom_logger import logger
-from api.sonarr.client import SonarrWebhookHandler
-from api.radarr.client import RadarrWebhookHandler
-from api.plex.client import PlexWebhookHandler
-from api.jellyfin.client import JellyfinWebhookHandler
+from src.sonarr.client import SonarrWebhookHandler
+from src.radarr.client import RadarrWebhookHandler
+from src.plex.client import PlexWebhookHandler
+from src.jellyfin.client import JellyfinWebhookHandler
 from config.config import WEBHOOKS_ENABLED
 
 class HandleWebHook:

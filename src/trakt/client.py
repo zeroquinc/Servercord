@@ -1,6 +1,5 @@
 import requests
 from config.globals import TRAKT_API_URL, TRAKT_CLIENT_ID
-from .exceptions import TraktAPIException
 
 class TraktClient:
     def __init__(self):
@@ -27,3 +26,9 @@ class TraktClient:
     def shows(self):
         from .endpoints.shows import Shows
         return Shows(self)
+    
+class TraktAPIException(Exception):
+    def __init__(self, error_data):
+        self.status_code = error_data.get('status_code')
+        self.message = error_data.get('message')
+        super().__init__(self.message)
