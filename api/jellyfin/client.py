@@ -370,7 +370,7 @@ class JellyfinWebhookHandler:
     async def handle_webhook(self):
         media_type = self.payload.get("Item", {}).get("Type", "Unknown")
         
-        if media_type in ["Person", "Folder"]:
+        if media_type in ["Person", "Folder", "Season", "Series"]:
             logger.info(f"Blocking webhook request for media type: {media_type}")
             return  # Stop processing immediately
 
