@@ -12,9 +12,8 @@ class JellyfinWebhookHandler:
         self.payload = payload
         self.discord_bot = discord_bot
         self.details = None
-        self.item_cache = {}  # Stores ItemAdded events temporarily
 
-    def extract_details(self):
+    def extract_details(self):  
         try:
             logger.debug("Extracting details from Jellyfin payload.")
 
@@ -29,9 +28,6 @@ class JellyfinWebhookHandler:
                 logger.warning("Item ID missing, skipping event.")
                 return None
 
-            # Cleanup old entries in item_cache before adding a new one (5 min timeout)
-            self.cleanup_cache()
-
             # Handle ItemAdded logic
             if event_type == "ItemAdded":
                 logger.info(f"Storing ItemAdded event for ID {item_id}.")
@@ -45,10 +41,6 @@ class JellyfinWebhookHandler:
             if event_type == "ItemUpdated":
                 if "MetadataDownload" not in self.payload.get("AdditionalData", []):
                     logger.info("Ignoring ItemUpdated event without MetadataDownload.")
-                    return None
-                
-                if media_type not in ["Episode", "Movie"]:
-                    logger.info(f"Ignoring ItemUpdated event for non-media type: {media_type}.")
                     return None
 
                 # Check if a corresponding ItemAdded exists
