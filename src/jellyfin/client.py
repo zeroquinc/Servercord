@@ -47,37 +47,22 @@ class JellyfinWebhookHandler:
     async def handle_webhook(self):
         media_type = self.payload.get("Item", {}).get("Type", "Unknown")
         
-        if media_type in ["Person", "Folder", "Season", "Series"]:
-            logger.info(f"Blocking webhook request for media type: {media_type}")
-            return  # Stop processing immediately
+        if self.is_blocked_media_type(media_type):
+            return
 
         event_type = self.payload.get("Event")
         item_id = self.payload.get("Item", {}).get("Id")
         media_name = self.payload.get("Item", {}).get("Name")
 
-        if not item_id or not media_name:
-            logger.warning("Item ID or Name missing, skipping event.")
+        if not self.is_valid_item(item_id, media_name):
             return
 
         if self.cache.is_duplicate(media_name):
             logger.info(f"Skipping duplicate event for {media_name} within 24h.")
             return
 
-        if event_type == "ItemAdded":
-            self.cache.store_item_added(item_id, self.payload)
-            return  # Do not process yet
-
         if event_type == "ItemUpdated":
-            if "MetadataDownload" not in self.payload.get("AdditionalData", []):
-                logger.info("Ignoring ItemUpdated event without MetadataDownload.")
-                return
-
-            cached_data = self.cache.get_item_added(item_id)
-            if cached_data:
-                logger.info(f"Processing matched ItemUpdated for ItemAdded ID {item_id}.")
-                self.payload = cached_data["data"]
-            else:
-                logger.info(f"ItemUpdated received without prior ItemAdded for ID {item_id}. Skipping event.")
+            if not self.should_process_item_updated():
                 return
 
         self.details = self.extract_details()
@@ -88,6 +73,40 @@ class JellyfinWebhookHandler:
 
         logger.info(f"Processing Jellyfin webhook payload for event type: {self.details.get('event', 'Unknown Event')}")
         await self.dispatch_embed()
+
+    def is_blocked_media_type(self, media_type):
+        if media_type in ["Person", "Folder", "Season", "Series"]:
+            logger.info(f"Blocking webhook request for media type: {media_type}")
+            return True
+        return False
+
+    def is_valid_item(self, item_id, media_name):
+        if not item_id or not media_name:
+            logger.warning("Item ID or Name missing, skipping event.")
+            return False
+        return True
+
+    def should_process_item_updated(self):
+        if "MetadataDownload" not in self.payload.get("AdditionalData", []):
+            logger.info("Ignoring ItemUpdated event without MetadataDownload.")
+            return False
+        
+        media = self.payload.get("Item", {})
+        media_type = media.get("Type", "Unknown")
+        
+        if media_type == "Episode":
+            if "ParentIndexNumber" not in media or "IndexNumber" not in media:
+                logger.info("Missing episode data (season/episode) in ItemUpdated event.")
+                return False
+
+        cached_data = self.cache.get_item_added(media.get("Id"))
+        if cached_data:
+            logger.info(f"Processing matched ItemUpdated for ItemAdded ID {media.get('Id')}.")
+            self.payload = cached_data["data"]
+            return True
+        else:
+            logger.info(f"ItemUpdated received without prior ItemAdded for ID {media.get('Id')}. Skipping event.")
+            return False
 
     async def dispatch_embed(self):
         embed = self.generate_embed()
