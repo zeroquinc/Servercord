@@ -61,18 +61,24 @@ class JellyfinWebhookHandler:
             logger.info(f"Skipping duplicate event for {media_name} within 24h.")
             return
 
-        if event_type == "ItemUpdated":
-            if not self.should_process_item_updated():
-                return
-
         self.details = self.extract_details()
-        
+
         if self.details is None:
             logger.info("Skipping webhook processing as details are None.")
             return
 
         logger.info(f"Processing Jellyfin webhook payload for event type: {self.details.get('event', 'Unknown Event')}")
-        await self.dispatch_embed()
+
+        if event_type == "ItemAdded":
+            # Store the ItemAdded event in the cache
+            self.cache.store_item_added(self.details["media"]["id"], self.details)
+            await self.dispatch_embed()
+            return
+
+        if event_type == "ItemUpdated":
+            if not self.should_process_item_updated():
+                return
+            await self.dispatch_embed()
 
     def is_blocked_media_type(self, media_type):
         if media_type in ["Person", "Folder", "Season", "Series"]:
