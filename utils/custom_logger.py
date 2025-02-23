@@ -1,30 +1,43 @@
 from loguru import logger
+from datetime import datetime
 import logging
 import json
 from pathlib import Path
 import sys
+from config.config import LOG_LEVEL
 
-LOG_LEVEL = 'DEBUG'
 discord_logger = None
 
 def create_logger():
-    """
-    Creates and configures a logger with specified log level and formats for console and file logging.
-
-    Args:
-        None
-
-    Returns:
-        None
-
-    Raises:
-        None
-    """
+    """Creates and configures the logger."""
     logs_path = Path('logs')
     logs_path.mkdir(exist_ok=True)
-    log_format = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <level>{message}</level>" if LOG_LEVEL != 'DEBUG' else "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <red>{file}</red> | <yellow>{function}</yellow> | <level>{message}</level>"
-    logger.add(sys.stdout, level=LOG_LEVEL, colorize=True, format=log_format)
-    logger.add(logs_path / 'servercord.log', level=LOG_LEVEL, colorize=True, format=log_format)
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    script_dir = Path(__file__).parent  # Or Path('.').resolve()
+    script_dir_str = str(script_dir)
+
+    log_format = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <cyan>{file}</cyan> | <yellow>{function}</yellow> | <magenta>{extra[script_dir]}</magenta> | <level>{message}</level>"
+
+    # Use a lambda function to inject the extra data *into the message*
+    def filter_(record):
+        record["extra"]["script_dir"] = script_dir_str  # Add to record's extra
+        return True # Keep all messages
+
+    logger.add(
+        logs_path / f"{today}-servercord.log",
+        level=LOG_LEVEL,
+        colorize=True,
+        format=log_format,
+        filter=filter_  # Apply the filter
+    )
+    logger.add(
+        sys.stdout,
+        level=LOG_LEVEL,
+        colorize=True,
+        format=log_format,
+        filter=filter_  # Apply the filter
+    )
 
 def switch_logger():
     """
