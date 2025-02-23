@@ -82,11 +82,10 @@ class JellyfinWebhookHandler:
 
     async def handle_play_event(self):
         """ Processes 'Play' event and logs it. """
+        self.details = self.extract_details()
         media_details, username = self.log_media_details()
         if media_details:
             logger.info(f"Processing play event for {media_details} for user {username}")
-
-        self.details = self.extract_details()
         await self.dispatch_embed()
 
 
