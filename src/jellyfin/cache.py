@@ -3,30 +3,41 @@ from utils.custom_logger import logger
 
 class EventCache:
     def __init__(self):
-        self.item_cache = {}  # Stores temporary ItemAdded events
-        self.name_cache = {}  # Tracks media names to avoid duplicate processing
+        self.item_cache = {}  # Stores temporary ItemAdded events based on File Id
 
-    def is_duplicate(self, media_name, expiry=86400):
+    def is_duplicate(self, file_id, expiry=86400):
         """Check if an event is a duplicate within the given time frame."""
         current_time = time.time()
-        if media_name in self.name_cache:
-            last_updated = self.name_cache[media_name]
+        if file_id in self.item_cache:
+            last_updated = self.item_cache[file_id]["timestamp"]
             if current_time - last_updated < expiry:
+                logger.info(f"Duplicate event detected for File Id {file_id}.")
                 return True
-        self.name_cache[media_name] = current_time
         return False
 
-    def store_item_added(self, item_id, data):
-        """Store an ItemAdded event in the cache."""
-        self.item_cache[item_id] = {
+    def store_item_added(self, file_id, data):
+        """Store an ItemAdded event in the cache based on File Id."""
+        self.item_cache[file_id] = {
             "timestamp": time.time(),
             "data": data
         }
-        logger.info(f"Stored ItemAdded event for ID {item_id}.")
+        logger.info(f"Stored ItemAdded event for File Id {file_id}.")
 
-    def get_item_added(self, item_id):
-        """Retrieve and remove an ItemAdded event from the cache."""
-        return self.item_cache.pop(item_id, None)
+    def get_item_added(self, file_id):
+        """Retrieve and remove an ItemAdded event from the cache based on File Id."""
+        item_data = self.item_cache.pop(file_id, None)
+        return item_data["data"] if item_data else None
+
+    def update_item_added(self, file_id, data):
+        """Update an existing ItemAdded event in the cache based on File Id."""
+        if file_id in self.item_cache:
+            self.item_cache[file_id]["data"] = data
+            self.item_cache[file_id]["timestamp"] = time.time()
+            logger.info(f"Updated ItemAdded event for File Id {file_id}.")
+        else:
+            logger.warning(f"ItemAdded event for File Id {file_id} not found. Storing new event.")
+            self.store_item_added(file_id, data)
+
 
     def cleanup(self, item_max_age=300, name_max_age=86400):
         """Remove old entries from caches based on different expiration times."""

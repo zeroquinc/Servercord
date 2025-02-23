@@ -4,6 +4,7 @@ from src.discord.embed import EmbedBuilder
 from src.tmdb.client import TMDb
 from utils.custom_logger import logger
 from src.jellyfin.cache import EventCache
+from utils.formatter import Formatter
 
 class JellyfinWebhookHandler:
     cache = EventCache()
@@ -21,7 +22,6 @@ class JellyfinWebhookHandler:
             series = data["Series"]
             media_type = media.get("Type", "Unknown")
             event_type = data["Event"]
-            logger.debug(f"Extracted data: {data}")
 
             media_details = self.extract_media_details(media, series, media_type)
             user_details = self.extract_user_details(data["User"])
@@ -51,34 +51,43 @@ class JellyfinWebhookHandler:
             return
 
         event_type = self.payload.get("Event")
-        item_id = self.payload.get("Item", {}).get("Id")
-        media_name = self.payload.get("Item", {}).get("Name")
-
-        if not self.is_valid_item(item_id, media_name):
+        media_sources = self.payload.get("Item", {}).get("MediaSources", [])
+        
+        # Look for the 'File' protocol and extract the 'Id' from it
+        file_id = None
+        for source in media_sources:
+            if source.get('Protocol') == 'File':
+                file_id = source.get('Id')
+                break
+        
+        if not file_id:
+            logger.warning("No File Id found, skipping event.")
             return
 
-        if self.cache.is_duplicate(media_name):
-            logger.info(f"Skipping duplicate event for {media_name} within 24h.")
+        # Check if file_id exists in the cache
+        if not self.is_valid_item(file_id):
             return
 
-        self.details = self.extract_details()
-
-        if self.details is None:
-            logger.info("Skipping webhook processing as details are None.")
-            return
-
-        logger.info(f"Processing Jellyfin webhook payload for event type: {self.details.get('event', 'Unknown Event')}")
-
+        # If the event is ItemAdded, store it in the cache for later processing
         if event_type == "ItemAdded":
-            # Store the ItemAdded event in the cache
-            self.cache.store_item_added(self.details["media"]["id"], self.details)
-            await self.dispatch_embed()
+            if not self.cache.is_duplicate(file_id):
+                logger.info(f"Storing ItemAdded event for File Id {file_id}.")
+                self.details = self.extract_details()
+                self.cache.store_item_added(file_id, self.details)
+            else:
+                logger.info(f"Skipping duplicate ItemAdded for File Id {file_id} within 24h.")
             return
 
+        # If the event is ItemUpdated, process it if there's an ItemAdded in the cache
         if event_type == "ItemUpdated":
-            if not self.should_process_item_updated():
-                return
-            await self.dispatch_embed()
+            cached_data = self.cache.get_item_added(file_id)
+            if cached_data:
+                logger.info(f"Found matching ItemAdded for File Id {file_id}, updating details.")
+                self.details = self.extract_details()  # Update with full details
+                self.cache.update_item_added(file_id, self.details)  # Update cache with new details
+                await self.dispatch_embed()  # Send an embed or process the update
+            else:
+                logger.info(f"ItemUpdated received without prior ItemAdded for File Id {file_id}. Skipping.")
 
     def is_blocked_media_type(self, media_type):
         if media_type in ["Person", "Folder", "Season", "Series"]:
@@ -86,33 +95,11 @@ class JellyfinWebhookHandler:
             return True
         return False
 
-    def is_valid_item(self, item_id, media_name):
-        if not item_id or not media_name:
-            logger.warning("Item ID or Name missing, skipping event.")
+    def is_valid_item(self, file_id):
+        if not file_id:
+            logger.warning("No File ID found, skipping event.")
             return False
         return True
-
-    def should_process_item_updated(self):
-        if "MetadataDownload" not in self.payload.get("AdditionalData", []):
-            logger.info("Ignoring ItemUpdated event without MetadataDownload.")
-            return False
-        
-        media = self.payload.get("Item", {})
-        media_type = media.get("Type", "Unknown")
-        
-        if media_type == "Episode":
-            if "ParentIndexNumber" not in media or "IndexNumber" not in media:
-                logger.info("Missing episode data (season/episode) in ItemUpdated event.")
-                return False
-
-        cached_data = self.cache.get_item_added(media.get("Id"))
-        if cached_data:
-            logger.info(f"Processing matched ItemUpdated for ItemAdded ID {media.get('Id')}.")
-            self.payload = cached_data["data"]
-            return True
-        else:
-            logger.info(f"ItemUpdated received without prior ItemAdded for ID {media.get('Id')}. Skipping event.")
-            return False
 
     async def dispatch_embed(self):
         embed = self.generate_embed()
