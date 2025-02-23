@@ -85,7 +85,9 @@ class PlexWebhookHandler:
         if self.poster_url:
             embed.set_thumbnail(url=self.poster_url)
         embed.set_author(name="Plex: Playing Media", icon_url=PLEX_ICON)
-        embed.set_footer(text=f"{self.username.capitalize()} • {self.video_decision.title()} • {self.product}")
+        embed.add_field(name="User", value=self.username.capitalize(), inline=True)
+        embed.add_field(name="Method", value=self.video_decision.title(), inline=True)
+        embed.add_field(name="Client", value=self.player.capitalize(), inline=True)
         return embed
 
     def embed_for_newcontent(self, color):
@@ -101,12 +103,11 @@ class PlexWebhookHandler:
             embed.set_footer(text=f"Aired on {self.air_date}")
         elif self.webhook_type == 'newcontent_season':
             embed.add_field(name="Episodes", value=f"{self.episode_count}", inline=False)
-        elif self.webhook_type == 'newcontent_movie':
-            links = self.build_links()
-            if links:
-                embed.add_field(name="Links", value=links, inline=False)
-            footer_text = self.build_footer()
-            embed.set_footer(text=footer_text)
+        links = self.build_links()
+        if links:
+            embed.add_field(name="Links", value=links, inline=False)
+        footer_text = self.build_footer()
+        embed.set_footer(text=footer_text)
         embed.set_author(name=f"Plex: New {self.media_type.capitalize()} added", icon_url=PLEX_ICON)
         return embed
 
