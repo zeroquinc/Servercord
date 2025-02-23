@@ -81,7 +81,7 @@ class PlexWebhookHandler:
         embed = EmbedBuilder(title=title, url=self.plex_url, color=color)
         if self.poster_url:
             embed.set_thumbnail(url=self.poster_url)
-        embed.set_author(name="Now Playing on Plex", icon_url=PLEX_ICON)
+        embed.set_author(name="Plex: Playing Media", icon_url=PLEX_ICON)
         embed.set_footer(text=f"{self.username.capitalize()} • {self.video_decision.title()} • {self.product}")
         return embed
 
@@ -104,7 +104,7 @@ class PlexWebhookHandler:
                 embed.add_field(name="Links", value=links, inline=False)
             footer_text = self.build_footer()
             embed.set_footer(text=footer_text)
-        embed.set_author(name=f"New {self.media_type.capitalize()} added to Plex", icon_url=PLEX_ICON)
+        embed.set_author(name=f"Plex: New {self.media_type.capitalize()} added", icon_url=PLEX_ICON)
         return embed
 
     def get_newcontent_title(self):
