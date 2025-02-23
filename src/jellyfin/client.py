@@ -4,7 +4,6 @@ from src.discord.embed import EmbedBuilder
 from src.tmdb.client import TMDb
 from utils.custom_logger import logger
 from src.jellyfin.cache import EventCache
-from utils.formatter import Formatter
 
 class JellyfinWebhookHandler:
     cache = EventCache()
@@ -13,6 +12,33 @@ class JellyfinWebhookHandler:
         self.payload = payload
         self.discord_bot = discord_bot
         self.details = None
+        
+    async def handle_webhook(self):
+        """ Main function to handle the webhook event. """
+        event_type = self.payload.get("Event")
+        media_type = self.payload.get("Item", {}).get("Type", "Unknown")
+
+        if self.is_blocked_media_type(media_type):
+            return
+
+        if event_type == "Play":
+            await self.handle_play_event()
+            return
+
+        file_id = self.get_file_id()
+        if not file_id:
+            logger.warning("No File Id found, skipping event.")
+            return
+
+        if not self.is_valid_item(file_id):
+            return
+
+        if event_type == "ItemAdded":
+            await self.handle_item_added(file_id)
+            return
+
+        if event_type == "ItemUpdated":
+            await self.handle_item_updated(file_id)
 
     def extract_details(self):
         try:
@@ -43,51 +69,79 @@ class JellyfinWebhookHandler:
         except Exception as e:
             logger.error(f"Error extracting details: {e}")
             return None
-        
-    async def handle_webhook(self):
-        media_type = self.payload.get("Item", {}).get("Type", "Unknown")
-        
-        if self.is_blocked_media_type(media_type):
-            return
 
-        event_type = self.payload.get("Event")
+
+    def get_file_id(self):
+        """ Extracts the file ID from the payload. """
         media_sources = self.payload.get("Item", {}).get("MediaSources", [])
-        
-        # Look for the 'File' protocol and extract the 'Id' from it
-        file_id = None
         for source in media_sources:
-            if source.get('Protocol') == 'File':
-                file_id = source.get('Id')
-                break
-        
-        if not file_id:
-            logger.warning("No File Id found, skipping event.")
-            return
+            if source.get("Protocol") == "File":
+                return source.get("Id")
+        return None
 
-        # Check if file_id exists in the cache
-        if not self.is_valid_item(file_id):
-            return
 
-        # If the event is ItemAdded, store it in the cache for later processing
-        if event_type == "ItemAdded":
-            if not self.cache.is_duplicate(file_id):
-                logger.info(f"Storing ItemAdded event for File Id {file_id}.")
-                self.details = self.extract_details()
-                self.cache.store_item_added(file_id, self.details)
-            else:
-                logger.info(f"Skipping duplicate ItemAdded for File Id {file_id} within 24h.")
-            return
+    async def handle_play_event(self):
+        """ Processes 'Play' event and logs it. """
+        media_details, username = self.log_media_details()
+        if media_details:
+            logger.info(f"Processing play event for {media_details} for user {username}")
 
-        # If the event is ItemUpdated, process it if there's an ItemAdded in the cache
-        if event_type == "ItemUpdated":
-            cached_data = self.cache.get_item_added(file_id)
-            if cached_data:
-                logger.info(f"Found matching ItemAdded for File Id {file_id}, updating details.")
-                self.details = self.extract_details()  # Update with full details
-                self.cache.update_item_added(file_id, self.details)  # Update cache with new details
-                await self.dispatch_embed()  # Send an embed or process the update
-            else:
-                logger.info(f"ItemUpdated received without prior ItemAdded for File Id {file_id}. Skipping.")
+        self.details = self.extract_details()
+        await self.dispatch_embed()
+
+
+    async def handle_item_added(self, file_id):
+        """ Processes 'ItemAdded' event and caches it. """
+        if not self.cache.is_duplicate(file_id):
+            self.details = self.extract_details()
+            self.cache.store_item_added(file_id, self.details)
+
+            media_details, username = self.log_media_details()
+            if media_details:
+                logger.info(f"Storing ItemAdded event for {media_details} for user {username}")
+        else:
+            logger.info(f"Skipping duplicate ItemAdded for File Id {file_id} within 24h.")
+
+
+    async def handle_item_updated(self, file_id):
+        """ Processes 'ItemUpdated' event if there's a matching 'ItemAdded'. """
+        cached_data = self.cache.get_item_added(file_id)
+        if cached_data:
+            self.details = self.extract_details()
+            self.cache.update_item_added(file_id, self.details)
+
+            media_details, username = self.log_media_details()
+            if media_details:
+                logger.info(f"Sending embed for {media_details} for user {username}")
+
+            await self.dispatch_embed()
+        else:
+            logger.info(f"ItemUpdated received without prior ItemAdded for File Id {file_id}. Skipping.")
+
+
+    def log_media_details(self):
+        """ Extracts media details for logging. """
+        media = self.payload.get("Item", {})
+        media_type = media.get("Type", "Unknown")
+        user = self.payload.get("User", {})
+        username = user.get("Name", "Unknown User")
+
+        if media_type == "Episode":
+            title = media.get("SeriesName", "Unknown Show")
+            episode_name = media.get("Name", "Unknown Episode")
+            season = media.get("ParentIndexNumber")
+            episode = media.get("IndexNumber")
+            episode_info = f"S{season:02}E{episode:02}" if season and episode else "Unknown Episode"
+            return f"{title} - {episode_name} ({episode_info})", username
+
+        if media_type == "Movie":
+            title = media.get("Name", "Unknown Movie")
+            release_year = media.get("ProductionYear", "Unknown Year")
+            return f"{title} ({release_year})", username
+
+        title = media.get("Name", "Unknown Media")
+        return f"{title} (Unknown Type)", username
+
 
     def is_blocked_media_type(self, media_type):
         if media_type in ["Person", "Folder", "Season", "Series"]:
