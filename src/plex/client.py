@@ -43,8 +43,11 @@ class PlexWebhookHandler:
         return 'N/A'
 
     async def handle_webhook(self):
-        logger.info(f"Processing Plex webhook payload for event type: {self.webhook_type}")
-        logger.debug(f"Payload: {json.dumps(self.payload, indent=4)}")
+        logger.debug(f"Received Plex payload: {json.dumps(self.payload, indent=4)}")
+        if self.webhook_type == 'nowplaying':
+            logger.info(f"Sending Plex webhook for {self.title} from user {self.username}.")
+        elif self.webhook_type.startswith('newcontent'):
+            logger.info(f"Sending Plex webhook for new {self.media_type}: {self.title}.")
         await self.dispatch_embed()
 
     def determine_channel_id(self):
