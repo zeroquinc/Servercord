@@ -9,24 +9,24 @@ from config.config import LOG_LEVEL
 discord_logger = None
 
 def create_logger():
-    """Creates and configures the logger (without path)."""
     logs_path = Path('logs')
     logs_path.mkdir(exist_ok=True)
     today = datetime.now().strftime("%Y-%m-%d")
 
-    log_format = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <cyan>{file}</cyan> | <yellow>{function}</yellow> | <level>{message}</level>"  # Path removed
+    # Correct format string - ANSI codes REMOVED:
+    log_format = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <cyan>{file}</cyan> | <yellow>{function}</yellow> | <magenta>{module}</magenta> | <level>{message}</level>" # % removed
 
     logger.add(
         logs_path / f"{today}-servercord.log",
         level=LOG_LEVEL,
-        colorize=True,
-        format=log_format,  # Use the simplified format
+        format=log_format,
+        # colorize=True,  # Add this back if you want loguru to handle colors. Remove for plain text
     )
     logger.add(
         sys.stdout,
         level=LOG_LEVEL,
-        colorize=True,
-        format=log_format,  # Use the simplified format
+        format=log_format,
+        colorize=True, # Colorize for console output
     )
 
 def switch_logger():
