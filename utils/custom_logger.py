@@ -14,7 +14,7 @@ def create_logger():
     today = datetime.now().strftime("%Y-%m-%d")
 
     # Correct format string - ANSI codes REMOVED:
-    log_format = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <cyan>{file}</cyan> | <yellow>{function}</yellow> | <magenta>{module}</magenta> | <level>{message}</level>" # % removed
+    log_format = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <cyan>{file}</cyan> | <yellow>{function}</yellow> | <cyan>{module}</cyan> | <level>{message}</level>" # % removed
 
     logger.add(
         logs_path / f"{today}-servercord.log",

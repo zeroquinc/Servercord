@@ -217,7 +217,7 @@ class JellyfinWebhookHandler:
     def extract_session_details(self, session):
         play_method = session.get("PlayState", {}).get("PlayMethod", "Unknown")
 
-        if play_method == "DirectStream":
+        if play_method == "DirectStream" or play_method == "DirectPlay":
             play_method = "Direct Play"
 
         return {
