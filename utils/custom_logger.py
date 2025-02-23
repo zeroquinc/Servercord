@@ -9,34 +9,24 @@ from config.config import LOG_LEVEL
 discord_logger = None
 
 def create_logger():
-    """Creates and configures the logger."""
+    """Creates and configures the logger (without path)."""
     logs_path = Path('logs')
     logs_path.mkdir(exist_ok=True)
     today = datetime.now().strftime("%Y-%m-%d")
 
-    script_dir = Path(__file__).parent  # Or Path('.').resolve()
-    script_dir_str = str(script_dir)
-
-    log_format = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <cyan>{file}</cyan> | <yellow>{function}</yellow> | <magenta>{extra[script_dir]}</magenta> | <level>{message}</level>"
-
-    # Use a lambda function to inject the extra data *into the message*
-    def filter_(record):
-        record["extra"]["script_dir"] = script_dir_str  # Add to record's extra
-        return True # Keep all messages
+    log_format = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <cyan>{file}</cyan> | <yellow>{function}</yellow> | <level>{message}</level>"  # Path removed
 
     logger.add(
         logs_path / f"{today}-servercord.log",
         level=LOG_LEVEL,
         colorize=True,
-        format=log_format,
-        filter=filter_  # Apply the filter
+        format=log_format,  # Use the simplified format
     )
     logger.add(
         sys.stdout,
         level=LOG_LEVEL,
         colorize=True,
-        format=log_format,
-        filter=filter_  # Apply the filter
+        format=log_format,  # Use the simplified format
     )
 
 def switch_logger():
