@@ -16,7 +16,7 @@ class PlexWebhookHandler:
         fields = [
             'media_type', 'year', 'title', 'summary', 'quality', 'air_date', 'genres',
             'release_date', 'season_num00', 'episode_num00', 'episode_count', 'poster_url',
-            'imdb_url', 'tvdb_url', 'trakt_url', 'plex_url', 'tmdb_url', 'tmdb_id_plex', 'critic_rating', 'audience_rating',
+            'imdb_url', 'imdb_id', 'tvdb_url', 'trakt_url', 'plex_url', 'tmdb_url', 'tmdb_id_plex', 'critic_rating', 'audience_rating',
             'rating', 'username', 'platform', 'player', 'product', 'video_decision',
             'remaining_time', 'duration_time', 'server_name', 'webhook_type'
         ]
@@ -121,13 +121,20 @@ class PlexWebhookHandler:
         return titles.get(self.webhook_type, self.title)
     
     def build_links(self):
-        links = []
-        if self.imdb_url and self.imdb_url.lower() != "n/a":
-            links.append(f"[IMDb]({self.imdb_url})")
-        if self.tmdb_url and self.tmdb_url.lower() != "n/a":
-            links.append(f"[TMDb]({self.tmdb_url})")
-        if self.tmdb_id_plex != "N/A":
-            links.append(f"[Trakt](https://trakt.tv/search/imdb?query={self.tmdb_id_plex})")
+        links = [
+            f"[IMDb]({self.imdb_url})" for url in [self.imdb_url] if url and url.lower() != "n/a"
+        ] + [
+            f"[TMDb]({self.tmdb_url})" for url in [self.tmdb_url] if url and url.lower() != "n/a"
+        ]
+
+        if self.imdb_id and self.imdb_id.lower() != "n/a":
+            trakt_urls = {
+                'newcontent_movie': f"https://trakt.tv/movie/{self.imdb_id}",
+                'newcontent_episode': f"https://trakt.tv/episode/{self.imdb_id}",
+                'newcontent_season': f"https://trakt.tv/shows/{self.imdb_id}"
+            }
+            links.append(f"[Trakt]({trakt_urls.get(self.webhook_type)})")
+
         return " • ".join(links)
 
     def build_footer(self):
