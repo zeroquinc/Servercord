@@ -55,7 +55,10 @@ class SonarrWebhookHandler:
         self.embed_title = f"{self.series_title} (S{self.formatted_season_number}E{self.formatted_episode_number})"
 
     async def handle_webhook(self):
-        logger.info(f"Processing Sonarr webhook payload for event type: {self.event_type}")
-        logger.debug(f"Payload: {json.dumps(self.payload, indent=4)}")
+        logger.debug(f"Received Sonarr payload: {json.dumps(self.payload, indent=4)}")
+        if self.episode_count > 1:
+            logger.info(f"Sending Sonarr webhook for {self.event_type} event: {self.series_title} (Season {self.formatted_season_number}) with {self.episode_count} episodes.")
+        else:
+            logger.info(f"Sending Sonarr webhook for {self.event_type} event: {self.series_title} (S{self.formatted_season_number}E{self.formatted_episode_number}) - {self.episode_title}.")
         channel = self.discord_bot.bot.get_channel(SONARR_CHANNEL)
         await process_webhook(self, channel)

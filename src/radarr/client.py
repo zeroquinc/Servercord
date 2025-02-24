@@ -32,8 +32,8 @@ class RadarrWebhookHandler:
             self.poster = TMDb.movie_poster_path(self.tmdb_id)
 
     async def handle_webhook(self):
-        logger.info(f"Processing Radarr webhook payload for event type: {self.event_type}")
-        logger.debug(f"Payload: {json.dumps(self.payload, indent=4)}")
+        logger.debug(f"Received Radarr payload: {json.dumps(self.payload, indent=4)}")
+        logger.info(f"Sending Radarr webhook for {self.event_type} event: {self.movie_title} ({self.movie_year}).")
 
         # Check if the event is "ApplicationUpdate" and set the channel accordingly
         if self.event_type == 'ApplicationUpdate':

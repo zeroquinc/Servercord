@@ -14,7 +14,7 @@ async def process_webhook(handler, channel):
         embed.add_field(name="Indexer", value=handler.indexer, inline=True)
         embed.add_field(name="Custom Formats", value=f"```{Formatter.format_custom_formats(handler.custom_format_score, handler.custom_formats)}```", inline=False)
         embed.set_thumbnail(url=handler.poster)
-        embed.set_author(name="Radarr: New Grab", icon_url=RADARR_ICON)
+        embed.set_author(name="Radarr: Grab", icon_url=RADARR_ICON)
 
         logger.info(f"Sending grab embed to Discord: {handler.release_title} - {handler.embed_title}")
 
