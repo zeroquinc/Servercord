@@ -103,11 +103,12 @@ class PlexWebhookHandler:
             embed.set_footer(text=f"Aired on {self.air_date}")
         elif self.webhook_type == 'newcontent_season':
             embed.add_field(name="Episodes", value=f"{self.episode_count}", inline=False)
+        if self.webhook_type == 'newcontent_movie':
+            footer_text = self.build_footer()
+            embed.set_footer(text=footer_text)
         links = self.build_links()
         if links:
             embed.add_field(name="Links", value=links, inline=False)
-        footer_text = self.build_footer()
-        embed.set_footer(text=footer_text)
         embed.set_author(name=f"Plex: New {self.media_type.capitalize()} added", icon_url=PLEX_ICON)
         return embed
 
@@ -125,7 +126,7 @@ class PlexWebhookHandler:
             links.append(f"[IMDb]({self.imdb_url})")
         if self.tmdb_url and self.tmdb_url.lower() != "n/a":
             links.append(f"[TMDb]({self.tmdb_url})")
-        if self.tmdb_id_plex:
+        if self.tmdb_id_plex != "N/A":
             links.append(f"[Trakt](https://trakt.tv/search/imdb?query={self.tmdb_id_plex})")
         return " • ".join(links)
 
