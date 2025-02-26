@@ -38,6 +38,9 @@ class JellyfinWebhookHandler:
             'imdb_id': 'Provider_imdb',
             'tvdb_id': 'Provider_tvdb',
             'tmdb_id': 'Provider_tmdb',
+            'imdb_id_show': 'Provider_imdb_Show',
+            'tvdb_id_show': 'Provider_tvdb_Show',
+            'tmdb_id_show': 'Provider_tmdb_Show',
             'username': 'NotificationUsername',
             'device_name': 'DeviceName',
             'client_name': 'ClientName',
@@ -58,22 +61,21 @@ class JellyfinWebhookHandler:
         logger.debug(f"Poster URL: {self.poster_url}")
 
         # Generate IMDb, TVDb, and TMDb URLs
-        self.imdb_url, self.tvdb_url, self.tmdb_url = self.generate_external_urls()
+        self.imdb_url, self.tmdb_url = self.generate_external_urls()
         
-        logger.debug(f"External URLs: IMDb: {self.imdb_url}, TVDb: {self.tvdb_url}, TMDb: {self.tmdb_url}")
+        logger.debug(f"External URLs: IMDb: {self.imdb_url}, TMDb: {self.tmdb_url}")
 
     def fetch_poster_url(self):
         """Fetch the appropriate poster URL based on media type."""
         if self.media_type.lower() == "movie" and self.tmdb_id != 'N/A':
             return TMDb.movie_poster_path(self.tmdb_id)
         elif self.media_type.lower() == "episode" and self.tvdb_id != 'N/A':
-            return TMDb.show_poster_path(self.tvdb_id)
+            return TMDb.show_poster_path(self.tvdb_id_show)
         return None  # No poster found
 
     def generate_external_urls(self):
         """Generate external URLs based on available IDs and media type."""
-        imdb_url = f"https://www.imdb.com/title/{self.imdb_id}" if self.imdb_id != 'N/A' else 'N/A'
-        tvdb_url = f"https://thetvdb.com/dereferrer/series/{self.tvdb_id}" if self.tvdb_id != 'N/A' else 'N/A'
+        imdb_url = f"https://www.imdb.com/title/{self.imdb_id_show}" if self.imdb_id_show != 'N/A' else 'N/A'
         tmdb_url = 'N/A'
 
         if self.tmdb_id != 'N/A':
@@ -82,7 +84,7 @@ class JellyfinWebhookHandler:
             elif self.media_type.lower() in ["episode", "series"]:
                 tmdb_url = f"https://www.themoviedb.org/tv/{self.tmdb_id}"
 
-        return imdb_url, tvdb_url, tmdb_url
+        return imdb_url, tmdb_url
 
     async def handle_webhook(self):
         logger.debug(f"Received Jellyfin payload: {json.dumps(self.payload, indent=4)}")
@@ -125,7 +127,7 @@ class JellyfinWebhookHandler:
             media_url = "N/A"
 
         # Format title
-        title = f"{self.title} ({self.year})" if self.media_type == "Movie" else f"{self.title} (S{self.season_num00}E{self.episode_num00})"
+        title = f"{self.title} ({self.year})" if self.media_type == "Movie" else f"{self.series_name} - {self.title} (S{self.season_num00}E{self.episode_num00})"
 
         # Create embed
         embed = EmbedBuilder(title=title, url=media_url, color=color)
