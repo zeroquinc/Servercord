@@ -103,8 +103,8 @@ class JellyfinWebhookHandler:
 
     def get_embed_color(self):
         color_mapping = {
-            'PlaybackStart': 0xe5a00d,           # Orange color for now playing
-            'ItemAdded': 0x1e90ff,   # Blue color for new episode content
+            'PlaybackStart': 0x6c76cc,
+            'ItemAdded': 0x1e90ff,
         }
         return color_mapping.get(self.webhook_type, 0x000000)  # Default to black if not found
 
