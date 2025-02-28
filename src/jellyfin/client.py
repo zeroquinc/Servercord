@@ -175,7 +175,7 @@ class JellyfinWebhookHandler:
     def get_newcontent_title(self):
         titles = {
             'Movie': f"{self.title} ({self.year})",
-            'Episode': f"{self.title} (S{self.season_num00}E{self.episode_num00})"
+            'Episode': f"{self.series_name} - {self.title} (S{self.season_num00}E{self.episode_num00})"
         }
         return titles.get(self.media_type, self.title)
 
