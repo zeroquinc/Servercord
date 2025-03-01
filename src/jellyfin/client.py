@@ -194,6 +194,26 @@ class JellyfinWebhookHandler:
             links.append(f"[Trakt]({trakt_urls.get(self.media_type)})")
 
         return " • ".join(links)
+    
+    def format_duration_time(self):
+        if self.duration_time and self.duration_time != 'N/A':
+            try:
+                parts = list(map(int, self.duration_time.split(":")))
+                if len(parts) == 3:  # HH:MM:SS format
+                    hours, minutes, _ = parts
+                elif len(parts) == 2:  # MM:SS format
+                    hours, minutes = 0, parts[0]
+                else:
+                    raise ValueError("Invalid format")
+                
+                if hours == 0:
+                    return f"{minutes}m"
+                return f"{hours}h {minutes}m"
+            except ValueError:
+                logger.error(f"Invalid duration_time format: {self.duration_time}")
+                return self.duration_time
+        return 'N/A'
+        
 
     def build_footer(self):
         footer_parts = []
