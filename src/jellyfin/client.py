@@ -75,14 +75,16 @@ class JellyfinWebhookHandler:
 
     def generate_external_urls(self):
         """Generate external URLs based on available IDs and media type."""
-        imdb_url = f"https://www.imdb.com/title/{self.imdb_id_show}" if self.imdb_id_show != 'N/A' else 'N/A'
+        imdb_url = 'N/A'
         tmdb_url = 'N/A'
 
-        if self.tmdb_id != 'N/A':
-            if self.media_type.lower() == "movie":
-                tmdb_url = f"https://www.themoviedb.org/movie/{self.tmdb_id}"
-            elif self.media_type.lower() in ["episode", "series"]:
-                tmdb_url = f"https://www.themoviedb.org/tv/{self.tmdb_id}"
+        if self.media_type.lower() == "movie":
+            imdb_url = f"https://www.imdb.com/title/{self.imdb_id}" if self.imdb_id != 'N/A' else 'N/A'
+            tmdb_url = f"https://www.themoviedb.org/movie/{self.tmdb_id}" if self.tmdb_id != 'N/A' else 'N/A'
+        
+        elif self.media_type.lower() in ["episode", "series"]:
+            imdb_url = f"https://www.imdb.com/title/{self.imdb_id_show}" if self.imdb_id_show != 'N/A' else 'N/A'
+            tmdb_url = f"https://www.themoviedb.org/tv/{self.tmdb_id}" if self.tmdb_id != 'N/A' else 'N/A'
 
         return imdb_url, tmdb_url
 
