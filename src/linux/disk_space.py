@@ -3,7 +3,7 @@ import subprocess
 from utils.custom_logger import logger
 
 def get_disk_space() -> str:
-    target_partition = '/dev/sdb'
+    target_partition = '/dev/sda'
     
     try:
         result = subprocess.run(['df', '-BG'], capture_output=True, text=True, check=True)
