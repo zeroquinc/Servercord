@@ -143,7 +143,7 @@ class PlexWebhookHandler:
         if self.poster_url:
             embed.set_thumbnail(url=self.poster_url)
         embed.set_author(name="Plex: Playing Media", icon_url=PLEX_ICON)
-        embed.add_field(name="User", value=self.username.capitalize(), inline=True)
+        embed.add_field(name="User", value=self.username, inline=True)
         embed.add_field(name="Method", value=self.video_decision.title(), inline=True)
         if self.product == "PM4K":
             self.product = "PlexMod for Kodi"
