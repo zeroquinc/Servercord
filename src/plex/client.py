@@ -1,7 +1,16 @@
 import json
+import requests
+import os
+from PIL import Image
+from io import BytesIO
+import numpy as np
+from sklearn.cluster import KMeans
+
 from config.globals import PLEX_ICON, PLEX_PLAYING, PLEX_CONTENT
 from src.discord.embed import EmbedBuilder
 from utils.custom_logger import logger
+
+CACHE_FILE = 'cache.json'
 
 class PlexWebhookHandler:
     def __init__(self, payload, discord_bot):
@@ -41,6 +50,64 @@ class PlexWebhookHandler:
                 logger.error(f"Invalid duration_time format: {self.duration_time}")
                 return self.duration_time
         return 'N/A'
+    
+    def get_image_from_url(self, url):
+        """Fetch image data from the URL, save it locally, and return the path."""
+        try:
+            if not url.endswith(('jpg', 'jpeg', 'png', 'gif')):
+                if 'imgur.com' in url:
+                    img_id = url.split('/')[-1]
+                    url = f'https://i.imgur.com/{img_id}.jpg'
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+            response = requests.get(url, headers=headers, allow_redirects=True)
+            response.raise_for_status()
+            img_data = BytesIO(response.content)
+            img_path = 'temp_image.jpg'
+            with open(img_path, 'wb') as f:
+                f.write(img_data.getbuffer())
+            return img_path
+        except Exception as e:
+            logger.error(f"Error downloading image {url}: {e}")
+            return None
+
+    def cache_color(self, image_url, num_clusters=3):
+        cached_data = {}
+        if os.path.exists(CACHE_FILE):
+            with open(CACHE_FILE, 'r') as f:
+                cached_data = json.load(f)
+                if image_url in cached_data:
+                    logger.debug(f"Using cached color for {image_url}")
+                    return cached_data[image_url]
+        
+        try:
+            img_path = self.get_image_from_url(image_url)
+            if not img_path:
+                return 0xFFFFFF  # Default white color
+            
+            img = Image.open(img_path).convert("RGB")
+            img = img.resize((img.width // 2, img.height // 2))
+            img_data = np.array(img).reshape((-1, 3))
+            
+            mask = np.linalg.norm(img_data, axis=1) > 50
+            filtered_pixels = img_data[mask]
+            
+            kmeans = KMeans(n_clusters=num_clusters, random_state=0).fit(filtered_pixels)
+            cluster_centers = kmeans.cluster_centers_
+            most_vibrant_cluster_idx = np.argmax(np.linalg.norm(cluster_centers - np.array([0, 0, 0]), axis=1))
+            vibrant_color = cluster_centers[most_vibrant_cluster_idx]
+            vibrant_color_hex = int(f'0x{int(vibrant_color[0]):02x}{int(vibrant_color[1]):02x}{int(vibrant_color[2]):02x}', 16)
+            
+            cached_data[image_url] = vibrant_color_hex
+            with open(CACHE_FILE, 'w') as f:
+                json.dump(cached_data, f)
+            
+            return vibrant_color_hex
+        except Exception as e:
+            logger.error(f"Error processing image {image_url}: {e}")
+            return 0xFFFFFF  # Default white color
+
+    def get_embed_color(self):
+        return self.cache_color(self.poster_url)
 
     async def handle_webhook(self):
         logger.debug(f"Received Plex payload: {json.dumps(self.payload, indent=4)}")
@@ -58,15 +125,6 @@ class PlexWebhookHandler:
             'newcontent_movie': PLEX_CONTENT,
         }
         return channel_ids.get(self.webhook_type, 'default_channel_id')
-
-    def get_embed_color(self):
-        color_mapping = {
-            'nowplaying': 0xe5a00d,           # Orange color for now playing
-            'newcontent_episode': 0x1e90ff,   # Blue color for new episode content
-            'newcontent_season': 0x32cd32,    # Lime green color for new season content
-            'newcontent_movie': 0xff6347      # Tomato red color for new movie content
-        }
-        return color_mapping.get(self.webhook_type, 0x000000)  # Default to black if not found
 
     def generate_embed(self):
         embed_color = self.get_embed_color()  # Get color based on webhook type

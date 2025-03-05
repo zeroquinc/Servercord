@@ -162,3 +162,9 @@ cython_debug/
 
 # Java Class files
 *.class
+
+# Own stuff
+*.jpeg
+*.jpg
+*.png
+*.json
