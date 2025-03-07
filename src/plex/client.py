@@ -51,6 +51,18 @@ class PlexWebhookHandler:
                 return self.duration_time
         return 'N/A'
     
+    def format_remaining_time(self):
+        if self.remaining_time and self.remaining_time != 'N/A':
+            try:
+                hours, minutes = map(int, self.remaining_time.split(":"))
+                if hours == 0:
+                    return f"{minutes}m"
+                return f"{hours}h {minutes}m"
+            except ValueError:
+                logger.error(f"Invalid remaining_time format: {self.remaining_time}")
+                return self.remaining_time
+        return 'N/A'
+    
     def get_image_from_url(self, url):
         """Fetch image data from the URL, save it locally, and return the path."""
         try:
@@ -58,7 +70,7 @@ class PlexWebhookHandler:
                 if 'imgur.com' in url:
                     img_id = url.split('/')[-1]
                     url = f'https://i.imgur.com/{img_id}.jpg'
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+            headers = {'User-Agent': 'Mozilla/5.0'}
             response = requests.get(url, headers=headers, allow_redirects=True)
             response.raise_for_status()
             img_data = BytesIO(response.content)
@@ -70,7 +82,8 @@ class PlexWebhookHandler:
             logger.error(f"Error downloading image {url}: {e}")
             return None
 
-    def cache_color(self, image_url, num_clusters=3):
+    def cache_color(self, image_url, num_clusters=5):
+        """Extracts the most distinct (not just dominant) color from an image and caches the result."""
         cached_data = {}
         if os.path.exists(CACHE_FILE):
             with open(CACHE_FILE, 'r') as f:
@@ -85,23 +98,38 @@ class PlexWebhookHandler:
                 return 0xFFFFFF  # Default white color
             
             img = Image.open(img_path).convert("RGB")
-            img = img.resize((img.width // 2, img.height // 2))
+            img = img.resize((200, 200))  # Resize to reduce processing time but keep detail
             img_data = np.array(img).reshape((-1, 3))
-            
-            mask = np.linalg.norm(img_data, axis=1) > 50
+
+            # Exclude very dark (near-black) and very light (near-white) pixels
+            mask = (np.linalg.norm(img_data, axis=1) > 40) & (np.linalg.norm(img_data, axis=1) < 240)
             filtered_pixels = img_data[mask]
+
+            if len(filtered_pixels) == 0:
+                return 0xFFFFFF  # Avoid errors if all pixels are filtered
             
-            kmeans = KMeans(n_clusters=num_clusters, random_state=0).fit(filtered_pixels)
+            # Cluster colors using KMeans
+            kmeans = KMeans(n_clusters=num_clusters, random_state=0, n_init=10)
+            kmeans.fit(filtered_pixels)
+
             cluster_centers = kmeans.cluster_centers_
-            most_vibrant_cluster_idx = np.argmax(np.linalg.norm(cluster_centers - np.array([0, 0, 0]), axis=1))
-            vibrant_color = cluster_centers[most_vibrant_cluster_idx]
-            vibrant_color_hex = int(f'0x{int(vibrant_color[0]):02x}{int(vibrant_color[1]):02x}{int(vibrant_color[2]):02x}', 16)
             
-            cached_data[image_url] = vibrant_color_hex
+            # Sort clusters by their "distinctiveness" (color contrast & saturation)
+            def colorfulness(c):
+                return (max(c) - min(c)) + np.linalg.norm(c - np.array([128, 128, 128]))  # Spread + distance from gray
+            
+            sorted_clusters = sorted(cluster_centers, key=colorfulness, reverse=True)
+            distinct_color = sorted_clusters[0]  # Pick the most distinct one
+            
+            # Convert to hex
+            distinct_color_hex = int(f'0x{int(distinct_color[0]):02x}{int(distinct_color[1]):02x}{int(distinct_color[2]):02x}', 16)
+
+            # Cache result
+            cached_data[image_url] = distinct_color_hex
             with open(CACHE_FILE, 'w') as f:
                 json.dump(cached_data, f)
-            
-            return vibrant_color_hex
+
+            return distinct_color_hex
         except Exception as e:
             logger.error(f"Error processing image {image_url}: {e}")
             return 0xFFFFFF  # Default white color
@@ -109,9 +137,12 @@ class PlexWebhookHandler:
     def get_embed_color(self):
         return self.cache_color(self.poster_url)
 
+    def get_embed_color(self):
+        return self.cache_color(self.poster_url)
+
     async def handle_webhook(self):
         logger.debug(f"Received Plex payload: {json.dumps(self.payload, indent=4)}")
-        if self.webhook_type == 'nowplaying':
+        if self.webhook_type == 'nowplaying' or self.webhook_type == 'nowresuming':
             logger.info(f"Sending Plex webhook for {self.title} from user {self.username}.")
         elif self.webhook_type.startswith('newcontent'):
             logger.info(f"Sending Plex webhook for new {self.media_type}: {self.title}.")
@@ -120,6 +151,7 @@ class PlexWebhookHandler:
     def determine_channel_id(self):
         channel_ids = {
             'nowplaying': PLEX_PLAYING,
+            'nowresuming': PLEX_PLAYING,
             'newcontent_episode': PLEX_CONTENT,
             'newcontent_season': PLEX_CONTENT,
             'newcontent_movie': PLEX_CONTENT,
@@ -131,6 +163,7 @@ class PlexWebhookHandler:
 
         embed_creators = {
             'nowplaying': self.embed_for_playing,
+            'nowresuming': self.embed_for_resuming,
             'newcontent_episode': self.embed_for_newcontent,
             'newcontent_season': self.embed_for_newcontent,
             'newcontent_movie': self.embed_for_newcontent,
@@ -142,7 +175,21 @@ class PlexWebhookHandler:
         embed = EmbedBuilder(title=title, url=self.plex_url, color=color)
         if self.poster_url:
             embed.set_thumbnail(url=self.poster_url)
-        embed.set_author(name="Plex: Playing Media", icon_url=PLEX_ICON)
+        embed.set_author(name="Plex: Media Playing", icon_url=PLEX_ICON)
+        embed.add_field(name="User", value=self.username, inline=True)
+        embed.add_field(name="Method", value=self.video_decision.title(), inline=True)
+        if self.product == "PM4K":
+            self.product = "PlexMod for Kodi"
+        embed.add_field(name="Client", value=self.product, inline=True)
+        return embed
+    
+    def embed_for_resuming(self, color):
+        description = f"Remaining time: {self.format_remaining_time()}"
+        title = f"{self.title} ({self.year})" if self.media_type == "movie" else f"{self.title} (S{self.season_num00}E{self.episode_num00})"
+        embed = EmbedBuilder(title=title, description=description, url=self.plex_url, color=color)
+        if self.poster_url:
+            embed.set_thumbnail(url=self.poster_url)
+        embed.set_author(name="Plex: Media Resumed", icon_url=PLEX_ICON)
         embed.add_field(name="User", value=self.username, inline=True)
         embed.add_field(name="Method", value=self.video_decision.title(), inline=True)
         if self.product == "PM4K":
