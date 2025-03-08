@@ -83,7 +83,7 @@ class PlexWebhookHandler:
             return None
 
     def cache_color(self, image_url, num_clusters=5):
-        """Extracts the most distinct (not just dominant) color from an image and caches the result."""
+        """Extracts the most representative and vibrant color from an image while avoiding excessive black/white."""
         cached_data = {}
         if os.path.exists(CACHE_FILE):
             with open(CACHE_FILE, 'r') as f:
@@ -91,48 +91,61 @@ class PlexWebhookHandler:
                 if image_url in cached_data:
                     logger.debug(f"Using cached color for {image_url}")
                     return cached_data[image_url]
-        
+
         try:
             img_path = self.get_image_from_url(image_url)
             if not img_path:
                 return 0xFFFFFF  # Default white color
-            
+
             img = Image.open(img_path).convert("RGB")
-            img = img.resize((200, 200))  # Resize to reduce processing time but keep detail
+            img = img.resize((200, 200))  # Resize for efficiency
             img_data = np.array(img).reshape((-1, 3))
 
-            # Exclude very dark (near-black) and very light (near-white) pixels
-            mask = (np.linalg.norm(img_data, axis=1) > 40) & (np.linalg.norm(img_data, axis=1) < 240)
+            # Filter out near-black and near-white pixels
+            brightness = np.linalg.norm(img_data, axis=1)
+            mask = (brightness > 50) & (brightness < 230)  # Ignore extreme dark/light pixels
             filtered_pixels = img_data[mask]
 
             if len(filtered_pixels) == 0:
-                return 0xFFFFFF  # Avoid errors if all pixels are filtered
-            
-            # Cluster colors using KMeans
+                return 0xFFFFFF  # Return white if all colors are filtered out
+
+            # Cluster colors
             kmeans = KMeans(n_clusters=num_clusters, random_state=0, n_init=10)
             kmeans.fit(filtered_pixels)
 
             cluster_centers = kmeans.cluster_centers_
-            
-            # Sort clusters by their "distinctiveness" (color contrast & saturation)
+            labels, counts = np.unique(kmeans.labels_, return_counts=True)
+
+            # Calculate colorfulness metric (favor strong colors)
             def colorfulness(c):
-                return (max(c) - min(c)) + np.linalg.norm(c - np.array([128, 128, 128]))  # Spread + distance from gray
-            
-            sorted_clusters = sorted(cluster_centers, key=colorfulness, reverse=True)
-            distinct_color = sorted_clusters[0]  # Pick the most distinct one
-            
-            # Convert to hex
+                r, g, b = c
+                rg = abs(r - g)
+                yb = abs(0.5 * (r + g) - b)
+                return (rg + yb) * np.linalg.norm(c - np.array([128, 128, 128]))
+
+            # Rank clusters by frequency and colorfulness
+            ranked_clusters = sorted(
+                zip(cluster_centers, counts),
+                key=lambda x: (colorfulness(x[0]), x[1]),  # Sort by colorfulness, then frequency
+                reverse=True
+            )
+
+            distinct_color = ranked_clusters[0][0]  # Pick the best-ranked color
+
+            # Convert RGB to hex
             distinct_color_hex = int(f'0x{int(distinct_color[0]):02x}{int(distinct_color[1]):02x}{int(distinct_color[2]):02x}', 16)
 
-            # Cache result
+            # Cache the result
             cached_data[image_url] = distinct_color_hex
             with open(CACHE_FILE, 'w') as f:
                 json.dump(cached_data, f)
 
             return distinct_color_hex
+
         except Exception as e:
             logger.error(f"Error processing image {image_url}: {e}")
             return 0xFFFFFF  # Default white color
+
 
     def get_embed_color(self):
         return self.cache_color(self.poster_url)
