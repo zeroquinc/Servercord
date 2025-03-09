@@ -50,7 +50,7 @@ class PlexWebhookHandler:
                 logger.error(f"Invalid duration_time format: {self.duration_time}")
                 return self.duration_time
         return 'N/A'
-    
+
     def format_remaining_time(self):
         if self.remaining_time and self.remaining_time != 'N/A':
             try:
@@ -62,7 +62,7 @@ class PlexWebhookHandler:
                 logger.error(f"Invalid remaining_time format: {self.remaining_time}")
                 return self.remaining_time
         return 'N/A'
-    
+
     def get_image_from_url(self, url):
         """Fetch image data from the URL, save it locally, and return the path."""
         try:
@@ -101,27 +101,33 @@ class PlexWebhookHandler:
             img = img.resize((200, 200))  # Resize for efficiency
             img_data = np.array(img).reshape((-1, 3))
 
-            # Filter out near-black and near-white pixels
-            brightness = np.linalg.norm(img_data, axis=1)
-            mask = (brightness > 50) & (brightness < 230)  # Ignore extreme dark/light pixels
+            # Improved filtering logic (check if R, G, and B are not close to each other)
+            mask = np.all((img_data > [50, 50, 50]) & (img_data < [230, 230, 230]), axis=1)  # Keep only non-near-black/white colors
             filtered_pixels = img_data[mask]
 
             if len(filtered_pixels) == 0:
                 return 0xFFFFFF  # Return white if all colors are filtered out
 
-            # Cluster colors
+            # Cluster colors using KMeans
             kmeans = KMeans(n_clusters=num_clusters, random_state=0, n_init=10)
             kmeans.fit(filtered_pixels)
 
             cluster_centers = kmeans.cluster_centers_
             labels, counts = np.unique(kmeans.labels_, return_counts=True)
 
-            # Calculate colorfulness metric (favor strong colors)
+            # Updated colorfulness function to consider red properly
             def colorfulness(c):
                 r, g, b = c
+                # Calculate the chromatic contrast (color difference) in RGB space
                 rg = abs(r - g)
                 yb = abs(0.5 * (r + g) - b)
-                return (rg + yb) * np.linalg.norm(c - np.array([128, 128, 128]))
+
+                # Add a weighted factor for brightness contrast
+                brightness = np.mean(c)
+                brightness_factor = 1 - (abs(brightness - 128) / 128)
+
+                # Return colorfulness based on chromatic contrast and brightness factor
+                return (rg + yb) * brightness_factor
 
             # Rank clusters by frequency and colorfulness
             ranked_clusters = sorted(
@@ -145,10 +151,6 @@ class PlexWebhookHandler:
         except Exception as e:
             logger.error(f"Error processing image {image_url}: {e}")
             return 0xFFFFFF  # Default white color
-
-
-    def get_embed_color(self):
-        return self.cache_color(self.poster_url)
 
     def get_embed_color(self):
         return self.cache_color(self.poster_url)
@@ -188,14 +190,14 @@ class PlexWebhookHandler:
         embed = EmbedBuilder(title=title, url=self.plex_url, color=color)
         if self.poster_url:
             embed.set_thumbnail(url=self.poster_url)
-        embed.set_author(name="Plex: Media Playing", icon_url=PLEX_ICON)
+        embed.set_author(name=f"Plex: Media Playing", icon_url=PLEX_ICON)
         embed.add_field(name="User", value=self.username, inline=True)
         embed.add_field(name="Method", value=self.video_decision.title(), inline=True)
         if self.product == "PM4K":
             self.product = "PlexMod for Kodi"
         embed.add_field(name="Client", value=self.product, inline=True)
         return embed
-    
+
     def embed_for_resuming(self, color):
         description = f"Remaining time: {self.format_remaining_time()}"
         title = f"{self.title} ({self.year})" if self.media_type == "movie" else f"{self.title} (S{self.season_num00}E{self.episode_num00})"
@@ -239,7 +241,7 @@ class PlexWebhookHandler:
             'newcontent_movie': f"{self.title} ({self.year})"
         }
         return titles.get(self.webhook_type, self.title)
-    
+
     def build_links(self):
         links = [
             f"[IMDb]({self.imdb_url})" for url in [self.imdb_url] if url and url.lower() != "n/a"
