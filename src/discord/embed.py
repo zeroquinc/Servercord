@@ -19,6 +19,10 @@ class EmbedBuilder:
     def set_thumbnail(self, url):
         self.embed.set_thumbnail(url=url)
         return self
+    
+    def set_image(self, url):
+        self.embed.set_image(url=url)
+        return self
 
     def build(self):
         return self.embed

@@ -52,3 +52,25 @@ class TMDb:
             logger.error(f"Failed to fetch movie poster path from TMDb: {e}")
 
         return None
+    
+    @classmethod
+    def movie_backdrop_path(cls, tmdb_id):
+        cache_key = f"movie_{tmdb_id}_backdrop"
+        if cache_key in cls._cache:
+            logger.debug(f"Found movie backdrop path in cache for {tmdb_id}")
+            return cls._cache[cache_key]
+
+        try:
+            response = requests.get(
+                f"{cls.BASE_URL}/movie/{tmdb_id}",
+                params={"api_key": cls.API_KEY}
+            )
+            response.raise_for_status()
+            data = response.json()
+            backdrop_path = f"https://image.tmdb.org/t/p/original{data.get('backdrop_path')}"
+            cls._cache[cache_key] = backdrop_path  # Store in cache
+            return backdrop_path
+        except Exception as e:
+            logger.error(f"Failed to fetch movie backdrop path from TMDb: {e}")
+
+        return None

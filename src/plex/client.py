@@ -7,6 +7,7 @@ import numpy as np
 from sklearn.cluster import KMeans
 
 from config.globals import PLEX_ICON, PLEX_PLAYING, PLEX_CONTENT
+from src.tmdb.client import TMDb
 from src.discord.embed import EmbedBuilder
 from utils.custom_logger import logger
 
@@ -190,7 +191,7 @@ class PlexWebhookHandler:
         embed = EmbedBuilder(title=title, url=self.plex_url, color=color)
         if self.poster_url:
             embed.set_thumbnail(url=self.poster_url)
-        embed.set_author(name=f"Plex: Media Playing", icon_url=PLEX_ICON)
+        embed.set_author(name="Plex: Media Playing", icon_url=PLEX_ICON)
         embed.add_field(name="User", value=self.username, inline=True)
         embed.add_field(name="Method", value=self.video_decision.title(), inline=True)
         if self.product == "PM4K":
@@ -215,22 +216,28 @@ class PlexWebhookHandler:
     def embed_for_newcontent(self, color):
         embed = EmbedBuilder(title=self.get_newcontent_title(), url=self.plex_url, color=color)
         if self.summary:
-            if self.webhook_type in ['newcontent_episode', 'newcontent_season']:
-                embed.add_field(name="Plot", value=f"||{self.summary}||", inline=False)
-            else:
-                embed.add_field(name="Plot", value=self.summary, inline=False)
+            embed.add_field(name="Summary", value=self.summary, inline=False)
         if self.poster_url:
             embed.set_thumbnail(url=self.poster_url)
         if self.webhook_type == 'newcontent_episode':
+            if self.format_duration_time():
+                embed.add_field(name="Runtime", value=self.format_duration_time(), inline=False)
             embed.set_footer(text=f"Aired on {self.air_date}")
         elif self.webhook_type == 'newcontent_season':
             embed.add_field(name="Episodes", value=f"{self.episode_count}", inline=False)
-        if self.webhook_type == 'newcontent_movie':
-            footer_text = self.build_footer()
-            embed.set_footer(text=footer_text)
+        elif self.webhook_type == 'newcontent_movie':
+            backdrop_url = TMDb.movie_backdrop_path(self.tmdb_id_plex)
+            if self.format_duration_time():
+                embed.add_field(name="Runtime", value=self.format_duration_time(), inline=False)
+            if backdrop_url:
+                embed.set_image(url=backdrop_url)
+            if self.genres and self.genres.lower() != "n/a":
+                embed.add_field(name="Genres", value=self.genres, inline=False)
         links = self.build_links()
         if links:
             embed.add_field(name="Links", value=links, inline=False)
+        # footer_text = self.build_footer()
+        # embed.set_footer(text=footer_text)
         embed.set_author(name=f"Plex: New {self.media_type.capitalize()} added", icon_url=PLEX_ICON)
         return embed
 
@@ -259,12 +266,12 @@ class PlexWebhookHandler:
 
         return " • ".join(links)
 
-    def build_footer(self):
-        footer_parts = []
-        if self.genres and self.genres.lower() != "n/a":
-            footer_parts.append(self.genres)
-        footer_parts.append(self.format_duration_time())
-        return " • ".join(footer_parts)
+    # def build_footer(self):
+    #     footer_parts = []
+    #     if self.genres and self.genres.lower() != "n/a":
+    #         footer_parts.append(self.genres)
+    #     footer_parts.append(self.format_duration_time())
+    #     return " • ".join(footer_parts)
 
     async def dispatch_embed(self):
         embed = self.generate_embed()
