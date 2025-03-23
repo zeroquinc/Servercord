@@ -61,7 +61,7 @@ class JellyfinWebhookHandler:
         logger.debug(f"Poster URL: {self.poster_url}")
 
         # Generate IMDb, TVDb, and TMDb URLs
-        self.imdb_url, self.tmdb_url = self.generate_external_urls()
+        self.imdb_url, self.tmdb_url, self.trakt_url = self.generate_external_urls()
         
         logger.debug(f"External URLs: IMDb: {self.imdb_url}, TMDb: {self.tmdb_url}")
 
