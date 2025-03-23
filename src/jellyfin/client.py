@@ -77,16 +77,19 @@ class JellyfinWebhookHandler:
         """Generate external URLs based on available IDs and media type."""
         imdb_url = 'N/A'
         tmdb_url = 'N/A'
+        trakt_url = 'N/A'
 
         if self.media_type.lower() == "movie":
             imdb_url = f"https://www.imdb.com/title/{self.imdb_id}" if self.imdb_id != 'N/A' else 'N/A'
             tmdb_url = f"https://www.themoviedb.org/movie/{self.tmdb_id}" if self.tmdb_id != 'N/A' else 'N/A'
+            trakt_url = f"https://trakt.tv/search/tmdb/{self.tmdb_id}?id_type=movie" if self.tmdb_id != 'N/A' else 'N/A'
         
         elif self.media_type.lower() in ["episode", "series"]:
             imdb_url = f"https://www.imdb.com/title/{self.imdb_id_show}" if self.imdb_id_show != 'N/A' else 'N/A'
-            tmdb_url = f"https://www.themoviedb.org/tv/{self.tmdb_id}" if self.tmdb_id != 'N/A' else 'N/A'
+            tmdb_url = f"https://www.themoviedb.org/tv/{self.tmdb_id_show}" if self.tmdb_id_show != 'N/A' else 'N/A'
+            trakt_url = f"https://trakt.tv/search/tvdb/{self.tvdb_id}?id_type=episode" if self.tvdb_id != 'N/A' else 'N/A'
 
-        return imdb_url, tmdb_url
+        return imdb_url, tmdb_url, trakt_url
 
     async def handle_webhook(self):
         logger.debug(f"Received Jellyfin payload: {json.dumps(self.payload, indent=4)}")
@@ -122,9 +125,9 @@ class JellyfinWebhookHandler:
     def embed_for_playing(self, color):
         # Determine the primary URL based on media type
         if self.media_type == "Movie":
-            media_url = self.imdb_url if self.imdb_url != "N/A" else self.tmdb_url
+            media_url = self.trakt_url if self.trakt_url != "N/A" else self.imdb_url
         elif self.media_type == "Episode":
-            media_url = self.imdb_url if self.imdb_url != "N/A" else self.tvdb_url
+            media_url = self.trakt_url if self.trakt_url != "N/A" else self.imdb_url
         else:
             media_url = "N/A"
 
@@ -149,9 +152,9 @@ class JellyfinWebhookHandler:
     def embed_for_newcontent(self, color):
         # Determine the primary URL based on media type
         if self.media_type == "Movie":
-            media_url = self.imdb_url if self.imdb_url != "N/A" else self.tmdb_url
+            media_url = self.trakt_url if self.trakt_url != "N/A" else self.imdb_url
         elif self.media_type == "Episode":
-            media_url = self.imdb_url if self.imdb_url != "N/A" else self.tvdb_url
+            media_url = self.trakt_url if self.trakt_url != "N/A" else self.imdb_url
         else:
             media_url = "N/A"
 
@@ -186,15 +189,9 @@ class JellyfinWebhookHandler:
             f"[IMDb]({self.imdb_url})" for url in [self.imdb_url] if url and url.lower() != "n/a"
         ] + [
             f"[TMDb]({self.tmdb_url})" for url in [self.tmdb_url] if url and url.lower() != "n/a"
+        ] + [
+            f"[Trakt]({self.trakt_url})" for url in [self.trakt_url] if url and url.lower() != "n/a"
         ]
-
-        if self.imdb_id and self.imdb_id.lower() != "n/a":
-            trakt_urls = {
-                'Movie': f"https://trakt.tv/movie/{self.imdb_id}",
-                'Episode': f"https://trakt.tv/episode/{self.imdb_id}"
-            }
-            links.append(f"[Trakt]({trakt_urls.get(self.media_type)})")
-
         return " • ".join(links)
     
     def format_duration_time(self):
