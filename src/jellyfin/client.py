@@ -69,7 +69,7 @@ class JellyfinWebhookHandler:
         """Fetch the appropriate poster URL based on media type."""
         if self.media_type.lower() == "movie" and self.tmdb_id != 'N/A':
             return TMDb.movie_poster_path(self.tmdb_id)
-        elif self.media_type.lower() == "episode" and self.tvdb_id != 'N/A':
+        elif self.media_type.lower() == "episode" and self.tvdb_id_show != 'N/A':
             return TMDb.show_poster_path(self.tvdb_id_show)
         return None  # No poster found
 
