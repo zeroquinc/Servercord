@@ -17,7 +17,6 @@ class TasksCog(commands.Cog):
         self.trakt_ratings.start()
         self.trakt_favorites.start()
         self.update_disk_space_channel.start()
-        self.weekly_global_embed.start()
 
     # Task to process recent Trakt ratings
     @tasks.loop(minutes=60)
@@ -67,17 +66,6 @@ class TasksCog(commands.Cog):
                 logger.info(f"Guild with ID {guild_id} not found.")
         except Exception as e:
             logger.error(f"Failed to update disk space channel: {e}")
-    
-    # Task to send a weekly global Trakt embed
-    @tasks.loop(hours=168)  # 168 hours in a week
-    async def weekly_global_embed(self):
-        channel = self.bot.get_channel(TRAKT_CHANNEL)
-        try:
-            embed_data = create_weekly_global_embed()
-            for embed in embed_data["embeds"]:
-                await channel.send(embed=discord.Embed.from_dict(embed))
-        except Exception as e:
-            logger.error(f'Error processing weekly Trakt embed: {e}')
 
     @trakt_ratings.before_loop
     async def before_trakt_ratings(self):
@@ -92,26 +80,6 @@ class TasksCog(commands.Cog):
             seconds = TimeCalculator.seconds_until_next_day()
             logger.info(f'Trakt favorites task will start in {str(timedelta(seconds=seconds))}')
             await asyncio.sleep(seconds)
-            
-    @weekly_global_embed.before_loop
-    async def before_weekly_task(self):
-        if ENABLE_DELAY:
-            await self.bot.wait_until_ready()
-            now = datetime.now()
-            
-            # Calculate the next Wednesday
-            next_wednesday = now + timedelta((2 - now.weekday() + 7) % 7)
-            next_run_time = datetime.combine(next_wednesday, datetime.min.time()) + timedelta(hours=12)
-            if next_run_time <= now:
-                next_run_time += timedelta(days=7)
-            
-            # Calculate the sleep duration
-            sleep_duration = (next_run_time - now).total_seconds()
-            hours, remainder = divmod(int(sleep_duration), 3600)
-            minutes, seconds = divmod(remainder, 60)
-            
-            logger.info(f'Weekly global Trakt task will start in {hours:02}:{minutes:02}:{seconds:02}')
-            await asyncio.sleep(sleep_duration)
 
 async def setup(bot):
     logger.info('Tasks cogs have been loaded')
