@@ -1,13 +1,12 @@
 import discord
 from discord.ext import tasks, commands
 import asyncio
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 from utils.custom_logger import logger
 from utils.datetime import TimeCalculator
 from src.trakt.ratings import process_ratings
 from src.trakt.favorites import process_favorites
-from src.trakt.global_weekly import create_weekly_global_embed
 from src.linux.disk_space import get_disk_space
 from config.globals import TRAKT_CHANNEL, TRAKT_USERNAME, ENABLE_DELAY, DISCORD_SERVER_ID
 
