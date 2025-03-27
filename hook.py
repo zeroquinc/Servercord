@@ -1,14 +1,12 @@
 from aiohttp import web
 from utils.custom_logger import logger
 from src.plex.client import PlexWebhookHandler
-from src.jellyfin.client import JellyfinWebhookHandler
 from config.config import WEBHOOKS_ENABLED
 
 class HandleWebHook:
     # Define handlers and routes inside the class
     WEBHOOKS = {
-        "plex": {"handler": PlexWebhookHandler, "route": "/plex_webhook"},
-        "jellyfin": {"handler": JellyfinWebhookHandler, "route": "/jellyfin_webhook"},
+        "plex": {"handler": PlexWebhookHandler, "route": "/plex_webhook"}
     }
 
     def __init__(self, discord_bot, host="0.0.0.0", port=2024):
