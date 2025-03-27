@@ -38,10 +38,6 @@ class DiscordBot:
         logger.info('Loading tasks cog')
         await self.bot.load_extension('src.discord.cogs.tasks')
 
-        # Load commands here
-        logger.info('Loading Trakt cog')
-        await self.bot.load_extension('src.discord.cogs.trakt')
-
         # Sync slash commands globally
         try:
             await self.bot.tree.sync()
