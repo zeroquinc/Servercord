@@ -34,17 +34,6 @@ class DiscordBot:
             f'Logged in as {self.bot.user.name} ({self.bot.user.id}) and is ready!'
         )
 
-        # Load the tasks cog
-        logger.info('Loading tasks cog')
-        await self.bot.load_extension('src.discord.cogs.tasks')
-
-        # Sync slash commands globally
-        try:
-            await self.bot.tree.sync()
-            logger.info("Slash commands synced globally.")
-        except Exception as e:
-            logger.error(f"Failed to sync slash commands: {e}")
-
     ## Post a single embed to a channel
     async def dispatch_embed(self, channel_id, embed):
         channel = self.bot.get_channel(channel_id)

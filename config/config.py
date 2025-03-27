@@ -2,12 +2,8 @@
 Global config variables
 """
 
-LOG_LEVEL = 'DEBUG'  # or 'DEBUG, WARNING, ERROR, CRITICAL'
-DELAY_START = False # Set to True to delay the start of tasks
+LOG_LEVEL = 'DEBUG'  # or 'INFO, WARNING, ERROR, CRITICAL'
 
 WEBHOOKS_ENABLED = {
-    "sonarr": True,
-    "radarr": True,
-    "plex": False,
-    "jellyfin": True,
+    "plex": True,
 }

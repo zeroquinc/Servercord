@@ -1,6 +1,6 @@
 import asyncio
 
-from hook import HandleWebHook
+from webhook.hook import HandleWebHook
 from src.discord.bot import DiscordBot
 
 from config.globals import DISCORD_TOKEN

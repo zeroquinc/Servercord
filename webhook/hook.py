@@ -52,7 +52,7 @@ class HandleWebHook:
             await runner.setup()
             site = web.TCPSite(runner, self.host, self.port)
             await site.start()
-            logger.info(f"Server started at http://{self.host}:{self.port}")
+            logger.info(f"Webhook server started at http://{self.host}:{self.port}")
         except Exception as e:
             logger.error(f"Error starting the server: {e}")
 
