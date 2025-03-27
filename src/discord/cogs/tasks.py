@@ -14,7 +14,6 @@ class TasksCog(commands.Cog):
         self.bot = bot
         self.trakt_ratings.start()
         self.trakt_favorites.start()
-        self.update_disk_space_channel.start()
 
     # Task to process recent Trakt ratings
     @tasks.loop(minutes=60)
