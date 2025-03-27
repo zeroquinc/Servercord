@@ -1,7 +1,5 @@
 from aiohttp import web
 from utils.custom_logger import logger
-from src.sonarr.client import SonarrWebhookHandler
-from src.radarr.client import RadarrWebhookHandler
 from src.plex.client import PlexWebhookHandler
 from src.jellyfin.client import JellyfinWebhookHandler
 from config.config import WEBHOOKS_ENABLED
@@ -9,8 +7,6 @@ from config.config import WEBHOOKS_ENABLED
 class HandleWebHook:
     # Define handlers and routes inside the class
     WEBHOOKS = {
-        "sonarr": {"handler": SonarrWebhookHandler, "route": "/sonarr_webhook"},
-        "radarr": {"handler": RadarrWebhookHandler, "route": "/radarr_webhook"},
         "plex": {"handler": PlexWebhookHandler, "route": "/plex_webhook"},
         "jellyfin": {"handler": JellyfinWebhookHandler, "route": "/jellyfin_webhook"},
     }
